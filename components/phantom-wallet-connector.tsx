@@ -119,7 +119,7 @@ export default function PhantomWalletConnector() {
     } catch (error) {
       console.error("Connection error:", error)
       if (error instanceof Error) {
-        alert(`Connection failed: ${error.message}`)
+        alert(`Connection failed: Please ensure you have Phantom Wallet Extension installed`)
       }
     } finally {
       setLoading(false)
