@@ -49,7 +49,7 @@ export default function PhantomWalletConnector() {
         setProvider(solWindow.solana)
         setWalletAvailable(true)
 
-        if (solWindow.solana.isConnected) {
+        if (solWindow.solana.isConnected && solWindow.solana.publicKey) {
           setConnected(true)
           setPublicKey(solWindow.solana.publicKey.toString())
         }
@@ -83,6 +83,12 @@ export default function PhantomWalletConnector() {
           setBalance(null)
         }
       })
+
+      // Check if already connected when component mounts
+      if (provider.isConnected && provider.publicKey) {
+        setConnected(true)
+        setPublicKey(provider.publicKey.toString())
+      }
     }
   }, [provider])
 
@@ -110,11 +116,15 @@ export default function PhantomWalletConnector() {
     try {
       setLoading(true)
       if (!provider.isConnected) {
-        const walletPublicKey = await provider.connect()
-        setPublicKey(walletPublicKey.toString())
+        const response = await provider.connect()
+        setPublicKey(response.publicKey.toString())
         setConnected(true)
       } else {
         console.log("Already connected to Phantom Wallet")
+        // Make sure we have the publicKey even if already connected
+        if (provider.publicKey) {
+          setPublicKey(provider.publicKey.toString())
+        }
       }
     } catch (error) {
       console.error("Connection error:", error)
@@ -150,7 +160,7 @@ export default function PhantomWalletConnector() {
 
   return (
     <div className="space-y-6">
-      <Card className="w-full max-w-md mx-auto bg-[#FBF3DF] border border-gray-200 dark:border-gray-800">
+      <Card className="w-full max-w-md mx-auto bg-white border border-gray-200 dark:border-gray-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wallet className="h-5 w-5" />
@@ -206,7 +216,6 @@ export default function PhantomWalletConnector() {
         </CardFooter>
       </Card>
 
-      {/* Render Mutable marketplace only when connected */}
       {connected && (
         <MutableMarketplace publicKey={publicKey} balance={balance} provider={provider} connection={connection} />
       )}

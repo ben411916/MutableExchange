@@ -242,7 +242,7 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
   }
 
   return (
-    <Card className="bg-[#FBF3DF] border border-gray-200 dark:border-gray-800">
+    <Card className="bg-white border border-gray-200 dark:border-gray-800">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
