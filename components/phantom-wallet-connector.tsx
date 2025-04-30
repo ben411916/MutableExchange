@@ -6,7 +6,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Copy, Check, Wallet } from "lucide-react"
-import { Connection, clusterApiUrl, PublicKey, SystemProgram, Transaction } from "@solana/web3.js"
+import { Connection, clusterApiUrl, PublicKey } from "@solana/web3.js"
+import Marketplace from "./marketplace"
 
 // Define types for Phantom wallet
 type PhantomEvent = "connect" | "disconnect" | "accountChanged"
@@ -15,6 +16,8 @@ interface PhantomProvider {
   publicKey: { toString: () => string }
   isConnected: boolean
   signMessage: (message: Uint8Array) => Promise<{ signature: Uint8Array }>
+  signTransaction: (transaction: any) => Promise<any>
+  signAllTransactions: (transactions: any[]) => Promise<any[]>
   connect: () => Promise<{ publicKey: { toString: () => string } }>
   disconnect: () => Promise<void>
   on: (event: PhantomEvent, callback: () => void) => void
@@ -25,6 +28,7 @@ type WindowWithSolana = Window & {
   solana?: PhantomProvider
 }
 
+// Use devnet for testing
 const connection = new Connection(clusterApiUrl("devnet"), "confirmed")
 
 export default function PhantomWalletConnector() {
@@ -52,11 +56,7 @@ export default function PhantomWalletConnector() {
       }
     }
 
-    const interval = setInterval(() => {
-      checkForPhantom()
-    }, 1000)
-
-    return () => clearInterval(interval)
+    checkForPhantom()
   }, [])
 
   useEffect(() => {
@@ -119,7 +119,7 @@ export default function PhantomWalletConnector() {
     } catch (error) {
       console.error("Connection error:", error)
       if (error instanceof Error) {
-        alert(`Connection failed: Please ensure you have Phantom Wallet Extension installed`)
+        alert(`Connection failed: ${error.message}`)
       }
     } finally {
       setLoading(false)
@@ -148,82 +148,66 @@ export default function PhantomWalletConnector() {
     return `${address.slice(0, 4)}...${address.slice(-4)}`
   }
 
-  const sendTransaction = async (recipientAddress: string, amount: number) => {
-    if (provider && publicKey) {
-      try {
-        const senderPublicKey = new PublicKey(publicKey)
-        const recipientPublicKey = new PublicKey(recipientAddress)
-
-        const transaction = new Transaction().add(
-          SystemProgram.transfer({
-            fromPubkey: senderPublicKey,
-            toPubkey: recipientPublicKey,
-            lamports: amount * 1e9, // Convert SOL to lamports
-          }),
-        )
-
-        // Sign the transaction using Phantom
-        const signedTransaction = await provider.signMessage(transaction.serializeMessage())
-
-        // Send the transaction to the Solana network
-        const { signature } = await connection.sendRawTransaction(signedTransaction, { skipPreflight: false })
-        await connection.confirmTransaction(signature, "confirmed")
-        console.log("Transaction successful:", signature)
-      } catch (error) {
-        console.error("Error sending transaction:", error)
-      }
-    }
-  }
-
   return (
-    <Card className="w-full max-w-md mx-auto bg-transparent border border-gray-200 dark:border-gray-800">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Wallet className="h-5 w-5" />
-          Phantom Wallet
-        </CardTitle>
-        <CardDescription>Connect your Solana wallet</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {connected ? (
-          <>
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Address:</span>
-              <div className="flex items-center gap-2">
-                <span className="text-sm">{shortenAddress(publicKey)}</span>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copyAddress}>
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
+    <div className="space-y-6">
+      <Card className="w-full max-w-md mx-auto bg-[#FBF3DF] border border-gray-200 dark:border-gray-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Wallet className="h-5 w-5" />
+            Phantom Wallet
+          </CardTitle>
+          <CardDescription>Connect your Solana wallet</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {connected ? (
+            <>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Address:</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">{shortenAddress(publicKey)}</span>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copyAddress}>
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Status:</span>
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  Connected
+                </Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Balance:</span>
+                {balance !== null ? (
+                  <span className="font-mono">{balance} SOL</span>
+                ) : (
+                  <Skeleton className="h-4 w-20" />
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="py-6 text-center">
+              <p className="text-muted-foreground mb-4">
+                Connect your Phantom wallet to interact with Solana blockchain
+              </p>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Status:</span>
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                Connected
-              </Badge>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Balance:</span>
-              {balance !== null ? <span className="font-mono">{balance} SOL</span> : <Skeleton className="h-4 w-20" />}
-            </div>
-          </>
-        ) : (
-          <div className="py-6 text-center">
-            <p className="text-muted-foreground mb-4">Connect your Phantom wallet to interact with Solana blockchain</p>
-          </div>
-        )}
-      </CardContent>
-      <CardFooter>
-        {!connected ? (
-          <Button className="w-full bg-purple-600 hover:bg-purple-700" onClick={connectWallet} disabled={loading}>
-            {loading ? "Connecting..." : "Connect Wallet"}
-          </Button>
-        ) : (
-          <Button variant="outline" className="w-full" onClick={disconnectWallet}>
-            Disconnect
-          </Button>
-        )}
-      </CardFooter>
-    </Card>
+          )}
+        </CardContent>
+        <CardFooter>
+          {!connected ? (
+            <Button className="w-full bg-purple-600 hover:bg-purple-700" onClick={connectWallet} disabled={loading}>
+              {loading ? "Connecting..." : "Connect Wallet"}
+            </Button>
+          ) : (
+            <Button variant="outline" className="w-full" onClick={disconnectWallet}>
+              Disconnect
+            </Button>
+          )}
+        </CardFooter>
+      </Card>
+
+      {/* Render marketplace only when connected */}
+      {connected && <Marketplace publicKey={publicKey} balance={balance} provider={provider} connection={connection} />}
+    </div>
   )
 }
