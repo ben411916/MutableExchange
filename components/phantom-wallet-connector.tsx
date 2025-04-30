@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Copy, Check, Wallet } from "lucide-react"
 import { Connection, clusterApiUrl, PublicKey } from "@solana/web3.js"
-import MutableMarketplace from "./mutable-marketplace"
+import MutablePlatform from "./mutable-platform"
+import Image from "next/image"
 
 // Define types for Phantom wallet
 type PhantomEvent = "connect" | "disconnect" | "accountChanged"
@@ -160,13 +161,19 @@ export default function PhantomWalletConnector() {
 
   return (
     <div className="space-y-6">
-      <Card className="w-full max-w-md mx-auto bg-white border border-gray-200 dark:border-gray-800">
+      {!connected && (
+        <div className="flex justify-center mb-6">
+          <Image src="/images/mutable-logo.png" alt="Mutable Logo" width={200} height={200} />
+        </div>
+      )}
+
+      <Card className="w-full max-w-md mx-auto bg-[#FFF8E1] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 font-mono">
             <Wallet className="h-5 w-5" />
-            Phantom Wallet
+            PHANTOM WALLET
           </CardTitle>
-          <CardDescription>Connect your Solana wallet</CardDescription>
+          <CardDescription>Connect your Solana wallet to use Mutable</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {connected ? (
@@ -174,7 +181,7 @@ export default function PhantomWalletConnector() {
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Address:</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">{shortenAddress(publicKey)}</span>
+                  <span className="text-sm font-mono">{shortenAddress(publicKey)}</span>
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copyAddress}>
                     {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </Button>
@@ -182,8 +189,8 @@ export default function PhantomWalletConnector() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Status:</span>
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                  Connected
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-mono">
+                  CONNECTED
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
@@ -198,26 +205,34 @@ export default function PhantomWalletConnector() {
           ) : (
             <div className="py-6 text-center">
               <p className="text-muted-foreground mb-4">
-                Connect your Phantom wallet to interact with Solana blockchain
+                Connect your Phantom wallet to interact with the Mutable platform
               </p>
             </div>
           )}
         </CardContent>
         <CardFooter>
           {!connected ? (
-            <Button className="w-full bg-purple-600 hover:bg-purple-700" onClick={connectWallet} disabled={loading}>
-              {loading ? "Connecting..." : "Connect Wallet"}
+            <Button
+              className="w-full bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
+              onClick={connectWallet}
+              disabled={loading}
+            >
+              {loading ? "CONNECTING..." : "CONNECT WALLET"}
             </Button>
           ) : (
-            <Button variant="outline" className="w-full" onClick={disconnectWallet}>
-              Disconnect
+            <Button
+              variant="outline"
+              className="w-full border-2 border-black text-black hover:bg-[#FFD54F] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
+              onClick={disconnectWallet}
+            >
+              DISCONNECT
             </Button>
           )}
         </CardFooter>
       </Card>
 
       {connected && (
-        <MutableMarketplace publicKey={publicKey} balance={balance} provider={provider} connection={connection} />
+        <MutablePlatform publicKey={publicKey} balance={balance} provider={provider} connection={connection} />
       )}
     </div>
   )

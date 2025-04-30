@@ -242,21 +242,18 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
   }
 
   return (
-    <Card className="bg-white border border-gray-200 dark:border-gray-800">
+    <Card className="bg-[#FFF8E1] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Coins className="h-5 w-5" />
-            <CardTitle>Mutable Exchange</CardTitle>
+            <CardTitle className="font-mono">CURRENCY EXCHANGE</CardTitle>
           </div>
-          <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 flex items-center gap-1">
-            <Image
-              src="/placeholder.svg?height=16&width=16"
-              alt="MUTB"
-              width={16}
-              height={16}
-              className="rounded-full"
-            />
+          <Badge
+            variant="outline"
+            className="bg-[#FFD54F] text-black border-2 border-black flex items-center gap-1 font-mono"
+          >
+            <Image src="/images/mutable-token.png" alt="MUTB" width={16} height={16} className="rounded-full" />
             {mutbBalance.toFixed(2)} MUTB
           </Badge>
         </div>
@@ -264,21 +261,33 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="exchange" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="exchange">Exchange</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
+          <TabsList className="mb-4 border-2 border-black bg-[#FFD54F]">
+            <TabsTrigger
+              value="exchange"
+              className="data-[state=active]:bg-white data-[state=active]:text-black font-mono"
+            >
+              EXCHANGE
+            </TabsTrigger>
+            <TabsTrigger
+              value="history"
+              className="data-[state=active]:bg-white data-[state=active]:text-black font-mono"
+            >
+              HISTORY
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="exchange" className="space-y-4">
             <div className="grid grid-cols-1 gap-4">
               {/* Source Token */}
               <div className="space-y-2">
-                <Label htmlFor="sourceToken">From</Label>
+                <Label htmlFor="sourceToken" className="font-mono">
+                  FROM
+                </Label>
                 <Select value={sourceToken?.id || ""} onValueChange={handleSourceTokenChange}>
-                  <SelectTrigger id="sourceToken">
+                  <SelectTrigger id="sourceToken" className="border-2 border-black">
                     <SelectValue placeholder="Select token" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="border-2 border-black">
                     {gameTokens.map((token) => (
                       <SelectItem
                         key={`source-${token.id}`}
@@ -298,7 +307,9 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
 
               {/* Amount Input */}
               <div className="space-y-2">
-                <Label htmlFor="sourceAmount">Amount</Label>
+                <Label htmlFor="sourceAmount" className="font-mono">
+                  AMOUNT
+                </Label>
                 <div className="flex items-center space-x-2">
                   <Input
                     id="sourceAmount"
@@ -307,12 +318,14 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
                     value={sourceAmount}
                     onChange={(e) => handleSourceAmountChange(e.target.value)}
                     disabled={!sourceToken}
+                    className="border-2 border-black"
                   />
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={handleSwapTokens}
                     disabled={!sourceToken || !destinationToken}
+                    className="border-2 border-black"
                   >
                     <Repeat className="h-4 w-4" />
                   </Button>
@@ -321,12 +334,14 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
 
               {/* Destination Token */}
               <div className="space-y-2">
-                <Label htmlFor="destinationToken">To</Label>
+                <Label htmlFor="destinationToken" className="font-mono">
+                  TO
+                </Label>
                 <Select value={destinationToken?.id || ""} onValueChange={handleDestinationTokenChange}>
-                  <SelectTrigger id="destinationToken">
+                  <SelectTrigger id="destinationToken" className="border-2 border-black">
                     <SelectValue placeholder="Select token" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="border-2 border-black">
                     {gameTokens.map((token) => (
                       <SelectItem key={`dest-${token.id}`} value={token.id} disabled={token.id === sourceToken?.id}>
                         <div className="flex items-center gap-2">
@@ -342,7 +357,9 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
 
               {/* Destination Amount */}
               <div className="space-y-2">
-                <Label htmlFor="destinationAmount">You Receive</Label>
+                <Label htmlFor="destinationAmount" className="font-mono">
+                  YOU RECEIVE
+                </Label>
                 <Input
                   id="destinationAmount"
                   type="text"
@@ -350,15 +367,16 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
                   value={destinationAmount}
                   readOnly
                   disabled
+                  className="border-2 border-black"
                 />
               </div>
 
               {/* Fee Information */}
               {sourceToken && destinationToken && sourceAmount && (
-                <div className="rounded-md bg-muted p-3 text-sm">
+                <div className="rounded-md bg-[#F5F5DC] p-3 text-sm border-2 border-black">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium">Exchange Rate:</span>
-                    <span>
+                    <span className="font-medium font-mono">EXCHANGE RATE:</span>
+                    <span className="font-mono">
                       1 {sourceToken.symbol} ={" "}
                       {(destinationToken.conversionRate / sourceToken.conversionRate).toFixed(4)}{" "}
                       {destinationToken.symbol}
@@ -367,13 +385,13 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
 
                   <div className="flex justify-between items-center mb-2">
                     <div className="flex items-center gap-1">
-                      <span className="font-medium">MUTB Fee:</span>
+                      <span className="font-medium font-mono">MUTB FEE:</span>
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger>
                             <Info className="h-3.5 w-3.5 text-muted-foreground" />
                           </TooltipTrigger>
-                          <TooltipContent>
+                          <TooltipContent className="border-2 border-black">
                             <p>Fee distribution:</p>
                             <p>
                               {feeDistribution.sourceGame}% to {sourceToken.gameName}
@@ -386,7 +404,7 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
                         </Tooltip>
                       </TooltipProvider>
                     </div>
-                    <span>
+                    <span className="font-mono">
                       {calculateMutbFee(Number.parseFloat(sourceAmount) / sourceToken.conversionRate).toFixed(4)} MUTB
                     </span>
                   </div>
@@ -395,11 +413,11 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
 
               {/* Trade Button */}
               <Button
-                className="w-full bg-purple-600 hover:bg-purple-700 mt-2"
+                className="w-full bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono mt-2"
                 disabled={!sourceToken || !destinationToken || !sourceAmount || Number.parseFloat(sourceAmount) <= 0}
                 onClick={handleTrade}
               >
-                Trade
+                TRADE
               </Button>
             </div>
           </TabsContent>
@@ -408,18 +426,18 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
             {tradeHistory.length > 0 ? (
               <div className="space-y-4">
                 {tradeHistory.map((trade) => (
-                  <div key={trade.id} className="border rounded-md p-3">
+                  <div key={trade.id} className="border-2 border-black rounded-md p-3 bg-[#F5F5DC]">
                     <div className="flex justify-between items-center mb-2">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                          {trade.status}
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-2 border-black font-mono">
+                          {trade.status.toUpperCase()}
                         </Badge>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-sm text-muted-foreground font-mono">
                           {new Date(trade.timestamp).toLocaleString()}
                         </span>
                       </div>
-                      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                        Fee: {trade.mutbFee.toFixed(4)} MUTB
+                      <Badge variant="outline" className="bg-[#FFD54F] text-black border-2 border-black font-mono">
+                        FEE: {trade.mutbFee.toFixed(4)} MUTB
                       </Badge>
                     </div>
 
@@ -431,7 +449,7 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
                           width={20}
                           height={20}
                         />
-                        <span>
+                        <span className="font-mono">
                           {trade.sourceAmount} {trade.sourceToken.symbol}
                         </span>
                       </div>
@@ -443,14 +461,14 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
                           width={20}
                           height={20}
                         />
-                        <span>
+                        <span className="font-mono">
                           {trade.destinationAmount.toFixed(2)} {trade.destinationToken.symbol}
                         </span>
                       </div>
                     </div>
 
                     {trade.txSignature && (
-                      <div className="text-xs text-muted-foreground truncate">
+                      <div className="text-xs text-muted-foreground truncate font-mono">
                         TX: {trade.txSignature.slice(0, 8)}...{trade.txSignature.slice(-8)}
                       </div>
                     )}
@@ -460,18 +478,17 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 <History className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                <p>No trade history yet</p>
+                <p className="font-mono">NO TRADE HISTORY YET</p>
               </div>
             )}
           </TabsContent>
         </Tabs>
       </CardContent>
-
-      {/* Confirmation Dialog */}
+      ;
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md border-2 border-black bg-[#FFF8E1]">
           <DialogHeader>
-            <DialogTitle>Confirm Trade</DialogTitle>
+            <DialogTitle className="font-mono">CONFIRM TRADE</DialogTitle>
             <DialogDescription>
               {tradeStatus === "idle" &&
                 sourceToken &&
@@ -482,26 +499,26 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
 
           {tradeStatus === "processing" && (
             <div className="flex flex-col items-center justify-center py-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700 mb-4"></div>
-              <p>{statusMessage}</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mb-4"></div>
+              <p className="font-mono">{statusMessage}</p>
             </div>
           )}
 
           {tradeStatus === "success" && (
             <div className="flex flex-col items-center justify-center py-4">
-              <div className="rounded-full h-12 w-12 bg-green-100 flex items-center justify-center mb-4">
+              <div className="rounded-full h-12 w-12 bg-green-100 flex items-center justify-center mb-4 border-2 border-black">
                 <Check className="h-6 w-6 text-green-600" />
               </div>
-              <p className="text-center">{statusMessage}</p>
+              <p className="text-center font-mono">{statusMessage}</p>
             </div>
           )}
 
           {tradeStatus === "error" && (
             <div className="flex flex-col items-center justify-center py-4">
-              <div className="rounded-full h-12 w-12 bg-red-100 flex items-center justify-center mb-4">
+              <div className="rounded-full h-12 w-12 bg-red-100 flex items-center justify-center mb-4 border-2 border-black">
                 <AlertCircle className="h-6 w-6 text-red-600" />
               </div>
-              <p className="text-center">{statusMessage}</p>
+              <p className="text-center font-mono">{statusMessage}</p>
             </div>
           )}
 
@@ -518,7 +535,7 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
                         height={32}
                       />
                       <div>
-                        <p className="font-medium">
+                        <p className="font-medium font-mono">
                           {sourceAmount} {sourceToken.symbol}
                         </p>
                         <p className="text-xs text-muted-foreground">{sourceToken.gameName}</p>
@@ -533,7 +550,7 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
                         height={32}
                       />
                       <div>
-                        <p className="font-medium">
+                        <p className="font-medium font-mono">
                           {destinationAmount} {destinationToken.symbol}
                         </p>
                         <p className="text-xs text-muted-foreground">{destinationToken.gameName}</p>
@@ -541,12 +558,12 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
                     </div>
                   </div>
 
-                  <Separator className="my-4" />
+                  <Separator className="my-4 border-black" />
 
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span>Exchange Rate</span>
-                      <span>
+                      <span className="font-mono">EXCHANGE RATE</span>
+                      <span className="font-mono">
                         1 {sourceToken.symbol} ={" "}
                         {(destinationToken.conversionRate / sourceToken.conversionRate).toFixed(4)}{" "}
                         {destinationToken.symbol}
@@ -554,15 +571,15 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
                     </div>
 
                     <div className="flex justify-between">
-                      <span>MUTB Fee</span>
-                      <span>
+                      <span className="font-mono">MUTB FEE</span>
+                      <span className="font-mono">
                         {calculateMutbFee(Number.parseFloat(sourceAmount) / sourceToken.conversionRate).toFixed(4)} MUTB
                       </span>
                     </div>
 
                     <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Fee to {sourceToken.gameName}</span>
-                      <span>
+                      <span className="font-mono">FEE TO {sourceToken.gameName.toUpperCase()}</span>
+                      <span className="font-mono">
                         {(
                           (calculateMutbFee(Number.parseFloat(sourceAmount) / sourceToken.conversionRate) *
                             feeDistribution.sourceGame) /
@@ -573,8 +590,8 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
                     </div>
 
                     <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Fee to {destinationToken.gameName}</span>
-                      <span>
+                      <span className="font-mono">FEE TO {destinationToken.gameName.toUpperCase()}</span>
+                      <span className="font-mono">
                         {(
                           (calculateMutbFee(Number.parseFloat(sourceAmount) / sourceToken.conversionRate) *
                             feeDistribution.destinationGame) /
@@ -585,8 +602,8 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
                     </div>
 
                     <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Fee to MUTB Stakers</span>
-                      <span>
+                      <span className="font-mono">FEE TO MUTB STAKERS</span>
+                      <span className="font-mono">
                         {(
                           (calculateMutbFee(Number.parseFloat(sourceAmount) / sourceToken.conversionRate) *
                             feeDistribution.stakers) /
@@ -600,11 +617,18 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
               )}
 
               <DialogFooter className="flex sm:justify-between">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancel
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                  className="border-2 border-black text-black hover:bg-[#FFD54F] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
+                >
+                  CANCEL
                 </Button>
-                <Button onClick={executeTrade} className="bg-purple-600 hover:bg-purple-700">
-                  Confirm Trade
+                <Button
+                  onClick={executeTrade}
+                  className="bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
+                >
+                  CONFIRM TRADE
                 </Button>
               </DialogFooter>
             </>
@@ -612,8 +636,12 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
 
           {tradeStatus === "error" && (
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full">
-                Close
+              <Button
+                variant="outline"
+                onClick={() => setIsDialogOpen(false)}
+                className="w-full border-2 border-black text-black hover:bg-[#FFD54F] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
+              >
+                CLOSE
               </Button>
             </DialogFooter>
           )}
