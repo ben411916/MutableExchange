@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Copy, Check, Wallet } from "lucide-react"
 import { Connection, clusterApiUrl, PublicKey } from "@solana/web3.js"
-import Marketplace from "./marketplace"
+import MutableMarketplace from "./mutable-marketplace"
 
 // Define types for Phantom wallet
 type PhantomEvent = "connect" | "disconnect" | "accountChanged"
@@ -206,8 +206,10 @@ export default function PhantomWalletConnector() {
         </CardFooter>
       </Card>
 
-      {/* Render marketplace only when connected */}
-      {connected && <Marketplace publicKey={publicKey} balance={balance} provider={provider} connection={connection} />}
+      {/* Render Mutable marketplace only when connected */}
+      {connected && (
+        <MutableMarketplace publicKey={publicKey} balance={balance} provider={provider} connection={connection} />
+      )}
     </div>
   )
 }
