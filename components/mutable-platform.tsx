@@ -27,7 +27,7 @@ export default function MutablePlatform({ publicKey, balance, provider, connecti
             <Image src="/images/mutable-logo.png" alt="Mutable Logo" width={200} height={200} className="mb-2" />
           </div>
 
-          <Card className="bg-[#FFF8E1] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+          <Card className="bg-[#fbf3de] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <CardContent className="p-6">
               <h2 className="text-2xl font-bold text-center mb-6 font-mono">SELECT PLATFORM</h2>
 
@@ -96,7 +96,7 @@ export default function MutablePlatform({ publicKey, balance, provider, connecti
             </div>
           </div>
 
-          <Card className="bg-[#FFF8E1] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+          <Card className="bg-[#fbf3de] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <CardContent className="p-12 flex flex-col items-center justify-center">
               <Gamepad2 size={64} className="mb-4 text-gray-700" />
               <h2 className="text-3xl font-bold font-mono text-center mb-2">COMING SOON</h2>

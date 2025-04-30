@@ -167,7 +167,7 @@ export default function PhantomWalletConnector() {
         </div>
       )}
 
-      <Card className="w-full max-w-md mx-auto bg-[#FFF8E1] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+      <Card className="w-full max-w-md mx-auto bg-[#fbf3de] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-mono">
             <Wallet className="h-5 w-5" />

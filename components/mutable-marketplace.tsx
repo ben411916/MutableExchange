@@ -242,7 +242,7 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
   }
 
   return (
-    <Card className="bg-[#FFF8E1] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+    <Card className="bg-[#fbf3de] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -373,7 +373,7 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
 
               {/* Fee Information */}
               {sourceToken && destinationToken && sourceAmount && (
-                <div className="rounded-md bg-[#F5F5DC] p-3 text-sm border-2 border-black">
+                <div className="rounded-md bg-[#f5efdc] p-3 text-sm border-2 border-black">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium font-mono">EXCHANGE RATE:</span>
                     <span className="font-mono">
@@ -426,7 +426,7 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
             {tradeHistory.length > 0 ? (
               <div className="space-y-4">
                 {tradeHistory.map((trade) => (
-                  <div key={trade.id} className="border-2 border-black rounded-md p-3 bg-[#F5F5DC]">
+                  <div key={trade.id} className="border-2 border-black rounded-md p-3 bg-[#f5efdc]">
                     <div className="flex justify-between items-center mb-2">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="bg-green-50 text-green-700 border-2 border-black font-mono">
@@ -486,7 +486,7 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
       </CardContent>
       ;
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md border-2 border-black bg-[#FFF8E1]">
+        <DialogContent className="sm:max-w-md border-2 border-black bg-[#fbf3de]">
           <DialogHeader>
             <DialogTitle className="font-mono">CONFIRM TRADE</DialogTitle>
             <DialogDescription>
