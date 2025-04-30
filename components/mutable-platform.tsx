@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Gamepad2, ArrowRightCircle, Coins } from "lucide-react"
 import MutableMarketplace from "./mutable-marketplace"
 import type { Connection } from "@solana/web3.js"
+import Link from "next/link"
 
 interface MutablePlatformProps {
   publicKey: string
@@ -105,10 +106,15 @@ export default function MutablePlatform({ publicKey, balance, provider, connecti
                 players and win big!
               </p>
 
-              <div className="mt-8 flex items-center gap-2 bg-[#FFD54F] px-4 py-2 rounded-md border-2 border-black">
+              <Link
+                href="https://www.mutable.live/preregister"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-8 flex items-center gap-2 bg-[#FFD54F] px-4 py-2 rounded-md border-2 border-black hover:bg-[#FFCA28] transition-colors"
+              >
                 <ArrowRightCircle size={20} />
                 <span className="font-medium">Join our waitlist for early access</span>
-              </div>
+              </Link>
             </CardContent>
           </Card>
         </div>

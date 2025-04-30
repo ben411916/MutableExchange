@@ -112,7 +112,10 @@ export default function PhantomWalletConnector() {
   }, [connected, publicKey])
 
   const connectWallet = async () => {
-    if (!provider) return
+    if (!provider) {
+      alert("Phantom wallet not detected. Please ensure you have Phantom wallet extension installed and signed in.")
+      return
+    }
 
     try {
       setLoading(true)
@@ -130,7 +133,9 @@ export default function PhantomWalletConnector() {
     } catch (error) {
       console.error("Connection error:", error)
       if (error instanceof Error) {
-        alert(`Connection failed: ${error.message}`)
+        alert(
+          `Connection failed: ${error.message}. Please ensure you have Phantom wallet extension installed and signed in.`,
+        )
       }
     } finally {
       setLoading(false)
