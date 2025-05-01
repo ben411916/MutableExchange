@@ -224,8 +224,13 @@ export default function MultiWalletConnector() {
     getBalance()
   }, [connected, publicKey, isTestMode])
 
+  // Update the connectWallet function to handle audio better
+
   // Connect to wallet
   const connectWallet = async (walletType: WalletType) => {
+    // Initialize audio first (this requires user interaction)
+    initializeAudio().catch((err) => console.warn("Audio initialization failed:", err))
+
     // Handle test mode
     if (walletType === "test") {
       const mockProvider = createMockProvider()
@@ -235,7 +240,9 @@ export default function MultiWalletConnector() {
       setActiveWallet("test")
       setIsTestMode(true)
       setBalance(5.0) // Set mock balance
-      playIntroSound() // Play intro sound
+
+      // Play intro sound with a slight delay to ensure audio is initialized
+      setTimeout(() => playIntroSound(), 100)
       return
     }
 
@@ -267,7 +274,9 @@ export default function MultiWalletConnector() {
         setProvider(walletProvider)
         setActiveWallet(walletType)
         setIsTestMode(false)
-        playIntroSound() // Play intro sound
+
+        // Play intro sound with a slight delay
+        setTimeout(() => playIntroSound(), 100)
       } else {
         console.log(`Already connected to ${walletType} Wallet`)
         // Make sure we have the publicKey even if already connected
@@ -277,7 +286,9 @@ export default function MultiWalletConnector() {
           setProvider(walletProvider)
           setActiveWallet(walletType)
           setIsTestMode(false)
-          playIntroSound() // Play intro sound
+
+          // Play intro sound with a slight delay
+          setTimeout(() => playIntroSound(), 100)
         }
       }
     } catch (error) {
@@ -375,8 +386,14 @@ export default function MultiWalletConnector() {
   return (
     <div className="space-y-6">
       {!connected && (
-        <div className="flex justify-center mb-6">
-          <Image src="/images/mutable-logo.png" alt="Mutable Logo" width={200} height={200} />
+        <div className="flex justify-center mb-2 sm:mb-6">
+          <Image
+            src="/images/mutable-logo.png"
+            alt="Mutable Logo"
+            width={200}
+            height={200}
+            className="w-32 h-32 sm:w-48 sm:h-48 md:w-[200px] md:h-[200px]"
+          />
         </div>
       )}
 

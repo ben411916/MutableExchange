@@ -17,9 +17,13 @@ export default function SoundButton({ children, noSound = false, onClick, ...pro
   // Initialize audio on first user interaction
   useEffect(() => {
     if (!audioInitialized) {
-      const handleFirstInteraction = () => {
-        initializeAudio()
-        setAudioInitialized(true)
+      const handleFirstInteraction = async () => {
+        try {
+          await initializeAudio()
+          setAudioInitialized(true)
+        } catch (error) {
+          console.error("Failed to initialize audio:", error)
+        }
         document.removeEventListener("click", handleFirstInteraction)
       }
 
@@ -33,7 +37,7 @@ export default function SoundButton({ children, noSound = false, onClick, ...pro
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     // Play sound if not disabled
-    if (!props.disabled && !noSound) {
+    if (!props.disabled && !noSound && audioInitialized) {
       playRandomCoinSound()
     }
 
