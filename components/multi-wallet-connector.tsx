@@ -111,16 +111,13 @@ export default function MultiWalletConnector() {
     const checkForWallets = async () => {
       const windowWithWallets = window as WindowWithWallets
 
-      // Check for Phantom
+      // Check for Phantom (Solana)
       const phantomAvailable = "solana" in window && windowWithWallets.solana?.isPhantom
 
-      // Check for MetaMask
-      const metamaskAvailable = "ethereum" in window && windowWithWallets.ethereum?.isMetaMask
-
-      // Check for Coinbase Wallet
-      const coinbaseAvailable = "ethereum" in window && windowWithWallets.ethereum?.isCoinbaseWallet
-
-      // WalletConnect is typically initialized by the app, so we'll just show it as an option
+      // Check for Ethereum wallets
+      const ethereumAvailable = "ethereum" in window
+      const metamaskAvailable = ethereumAvailable && windowWithWallets.ethereum?.isMetaMask
+      const coinbaseAvailable = ethereumAvailable && windowWithWallets.ethereum?.isCoinbaseWallet
 
       setWallets((prev) =>
         prev.map((wallet) => {
@@ -148,7 +145,7 @@ export default function MultiWalletConnector() {
         }
       }
 
-      if (metamaskAvailable || coinbaseAvailable) {
+      if (ethereumAvailable) {
         setEthereumProvider(windowWithWallets.ethereum!)
 
         // Check if already connected
@@ -304,7 +301,9 @@ export default function MultiWalletConnector() {
 
   // Connect to Ethereum wallet (MetaMask or Coinbase)
   const connectEthereum = async (walletType: "metamask" | "coinbase") => {
-    if (!ethereumProvider) {
+    // Check if ethereum is available in window
+    const windowWithWallets = window as WindowWithWallets
+    if (!windowWithWallets.ethereum) {
       alert(
         `${walletType === "metamask" ? "MetaMask" : "Coinbase Wallet"} not detected. Please ensure you have the extension installed and signed in.`,
       )
@@ -313,7 +312,8 @@ export default function MultiWalletConnector() {
 
     try {
       setLoading(true)
-      const accounts = await ethereumProvider.request({ method: "eth_requestAccounts" })
+      // Explicitly request ethereum accounts
+      const accounts = await windowWithWallets.ethereum.request({ method: "eth_requestAccounts" })
 
       if (accounts.length > 0) {
         setEthereumAddress(accounts[0])
@@ -342,19 +342,13 @@ export default function MultiWalletConnector() {
 
   // Connect to selected wallet
   const connectWallet = async (walletType: WalletType) => {
-    switch (walletType) {
-      case "phantom":
-        await connectPhantom()
-        break
-      case "metamask":
-        await connectEthereum("metamask")
-        break
-      case "coinbase":
-        await connectEthereum("coinbase")
-        break
-      case "walletconnect":
-        await connectWalletConnect()
-        break
+    // Prevent any cross-connection between wallet types
+    if (walletType === "phantom") {
+      await connectPhantom()
+    } else if (walletType === "metamask" || walletType === "coinbase") {
+      await connectEthereum(walletType)
+    } else if (walletType === "walletconnect") {
+      await connectWalletConnect()
     }
   }
 
