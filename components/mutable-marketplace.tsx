@@ -23,7 +23,6 @@ import { Repeat, ArrowRight, Info, Check, AlertCircle, History, Coins } from "lu
 import Image from "next/image"
 import { type Connection, PublicKey, Transaction, SystemProgram } from "@solana/web3.js"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import SoundButton from "./sound-button"
 
 // Mock MUTB token address (this would be the actual token address in production)
 const MUTB_TOKEN_ADDRESS = "4EeyZSGjkiM4bBhMPWriyaR9mqdFBGtYKcYCAzTivQbW"
@@ -413,13 +412,13 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
               )}
 
               {/* Trade Button */}
-              <SoundButton
+              <Button
                 className="w-full bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono mt-2"
                 disabled={!sourceToken || !destinationToken || !sourceAmount || Number.parseFloat(sourceAmount) <= 0}
                 onClick={handleTrade}
               >
                 TRADE
-              </SoundButton>
+              </Button>
             </div>
           </TabsContent>
 
@@ -618,32 +617,32 @@ export default function MutableMarketplace({ publicKey, balance, provider, conne
               )}
 
               <DialogFooter className="flex sm:justify-between">
-                <SoundButton
+                <Button
                   variant="outline"
                   onClick={() => setIsDialogOpen(false)}
                   className="border-2 border-black text-black hover:bg-[#FFD54F] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
                 >
                   CANCEL
-                </SoundButton>
-                <SoundButton
+                </Button>
+                <Button
                   onClick={executeTrade}
                   className="bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
                 >
                   CONFIRM TRADE
-                </SoundButton>
+                </Button>
               </DialogFooter>
             </>
           )}
 
           {tradeStatus === "error" && (
             <DialogFooter>
-              <SoundButton
+              <Button
                 variant="outline"
                 onClick={() => setIsDialogOpen(false)}
                 className="w-full border-2 border-black text-black hover:bg-[#FFD54F] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
               >
                 CLOSE
-              </SoundButton>
+              </Button>
             </DialogFooter>
           )}
         </DialogContent>

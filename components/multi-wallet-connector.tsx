@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -10,7 +9,8 @@ import { Connection, clusterApiUrl, PublicKey } from "@solana/web3.js"
 import MutablePlatform from "./mutable-platform"
 import Image from "next/image"
 import SoundButton from "./sound-button"
-import { playIntroSound, initializeAudio } from "@/utils/sound-utils"
+import AudioToggleButton from "./audio-toggle-button"
+import { audioManager, playIntroSound, initializeAudio, loadAudioFiles } from "@/utils/audio-manager"
 
 // Define types for Phantom wallet
 type PhantomEvent = "connect" | "disconnect" | "accountChanged"
@@ -113,31 +113,16 @@ export default function MultiWalletConnector() {
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isAudioInitialized, setIsAudioInitialized] = useState(false)
 
-  // Initialize audio on component mount
+  // Initialize audio manager (but don't load sounds yet)
   useEffect(() => {
-    const handleUserInteraction = () => {
-      initializeAudio().catch((err) => console.warn("Audio initialization failed:", err))
-
-      // Remove event listeners after first interaction
-      document.removeEventListener("click", handleUserInteraction)
-      document.removeEventListener("touchstart", handleUserInteraction)
-      document.removeEventListener("keydown", handleUserInteraction)
+    const initAudio = async () => {
+      await initializeAudio()
+      setIsAudioInitialized(true)
     }
 
-    // Try to initialize immediately
-    initializeAudio().catch((err) => console.warn("Initial audio initialization failed:", err))
-
-    // Also set up event listeners for user interaction
-    document.addEventListener("click", handleUserInteraction)
-    document.addEventListener("touchstart", handleUserInteraction)
-    document.addEventListener("keydown", handleUserInteraction)
-
-    return () => {
-      document.removeEventListener("click", handleUserInteraction)
-      document.removeEventListener("touchstart", handleUserInteraction)
-      document.removeEventListener("keydown", handleUserInteraction)
-    }
+    initAudio()
   }, [])
 
   // Check for available wallets
@@ -236,12 +221,12 @@ export default function MultiWalletConnector() {
     getBalance()
   }, [connected, publicKey, isTestMode])
 
-  // Update the connectWallet function to handle audio better
-
   // Connect to wallet
   const connectWallet = async (walletType: WalletType) => {
-    // Initialize audio first (this requires user interaction)
-    await initializeAudio().catch((err) => console.warn("Audio initialization failed:", err))
+    // Initialize and load audio files on first interaction
+    if (isAudioInitialized && !audioManager.isSoundMuted()) {
+      await loadAudioFiles()
+    }
 
     // Handle test mode
     if (walletType === "test") {
@@ -253,14 +238,10 @@ export default function MultiWalletConnector() {
       setIsTestMode(true)
       setBalance(5.0) // Set mock balance
 
-      // Play intro sound with a slight delay to ensure audio is initialized
-      setTimeout(() => {
-        try {
-          playIntroSound()
-        } catch (error) {
-          console.warn("Failed to play intro sound:", error)
-        }
-      }, 300)
+      // Play intro sound when wallet is connected (if not muted)
+      if (!audioManager.isSoundMuted()) {
+        playIntroSound()
+      }
       return
     }
 
@@ -293,8 +274,10 @@ export default function MultiWalletConnector() {
         setActiveWallet(walletType)
         setIsTestMode(false)
 
-        // Play intro sound with a slight delay
-        setTimeout(() => playIntroSound(), 100)
+        // Play intro sound when wallet is connected (if not muted)
+        if (!audioManager.isSoundMuted()) {
+          playIntroSound()
+        }
       } else {
         console.log(`Already connected to ${walletType} Wallet`)
         // Make sure we have the publicKey even if already connected
@@ -305,8 +288,10 @@ export default function MultiWalletConnector() {
           setActiveWallet(walletType)
           setIsTestMode(false)
 
-          // Play intro sound with a slight delay
-          setTimeout(() => playIntroSound(), 100)
+          // Play intro sound when wallet is connected (if not muted)
+          if (!audioManager.isSoundMuted()) {
+            playIntroSound()
+          }
         }
       }
     } catch (error) {
@@ -393,9 +378,10 @@ export default function MultiWalletConnector() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleCollapse}>
+          <AudioToggleButton />
+          <SoundButton variant="ghost" size="icon" className="h-8 w-8" onClick={toggleCollapse}>
             <ChevronDown className="h-4 w-4" />
-          </Button>
+          </SoundButton>
         </div>
       </div>
     )
@@ -406,7 +392,7 @@ export default function MultiWalletConnector() {
       {!connected && (
         <div className="flex justify-center mb-2 sm:mb-6">
           <Image
-            src="/images/mutable-logo.png"
+            src="/images/mutable-logo-transparent.png"
             alt="Mutable Logo"
             width={200}
             height={200}
@@ -421,11 +407,14 @@ export default function MultiWalletConnector() {
             <Wallet className="h-5 w-5" />
             <CardTitle className="font-mono">SOLANA WALLET</CardTitle>
           </div>
-          {connected && !isCollapsed && (
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleCollapse}>
-              <ChevronUp className="h-4 w-4" />
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <AudioToggleButton />
+            {connected && !isCollapsed && (
+              <SoundButton variant="ghost" size="icon" className="h-8 w-8" onClick={toggleCollapse}>
+                <ChevronUp className="h-4 w-4" />
+              </SoundButton>
+            )}
+          </div>
         </CardHeader>
 
         {connected && isCollapsed ? (
@@ -471,9 +460,9 @@ export default function MultiWalletConnector() {
                     <span className="text-sm font-medium">Address:</span>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-mono">{shortenAddress(publicKey)}</span>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copyAddress}>
+                      <SoundButton variant="ghost" size="icon" className="h-8 w-8" onClick={copyAddress}>
                         {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                      </Button>
+                      </SoundButton>
                     </div>
                   </div>
                   <div className="flex justify-between items-center">

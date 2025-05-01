@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,73 +7,45 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Gamepad2, Users, Trophy, Clock } from "lucide-react"
+import { Trophy } from "lucide-react"
 import Image from "next/image"
-import GameController from "./game-controller"
-import GameInstructions from "./game-instructions"
+import dynamic from "next/dynamic"
+import { UNITS } from "./units"
+
+// Import GameController with SSR disabled
+const GameController = dynamic(() => import("./game-controller"), {
+  ssr: false,
+  loading: () => (
+    <div className="p-8 text-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-4"></div>
+      <p>Loading game...</p>
+    </div>
+  ),
+})
 
 interface MatchmakingLobbyProps {
   publicKey: string
-  balance: number | null
+  playerName: string
   mutbBalance: number
-}
-
-interface GameMode {
-  id: string
-  name: string
-  description: string
-  players: number
-  icon: React.ReactNode
-  minWager: number
+  onExit: () => void
 }
 
 interface GameLobby {
   id: string
   host: string
   hostName: string
-  mode: string
   wager: number
   players: number
   maxPlayers: number
   status: "waiting" | "full" | "in-progress"
 }
 
-export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: MatchmakingLobbyProps) {
+export default function MatchmakingLobby({ publicKey, playerName, mutbBalance, onExit }: MatchmakingLobbyProps) {
   const [activeTab, setActiveTab] = useState("browse")
-  const [selectedMode, setSelectedMode] = useState<string | null>(null)
   const [wagerAmount, setWagerAmount] = useState<number>(1)
-  const [playerName, setPlayerName] = useState("Player")
   const [inGame, setInGame] = useState(false)
   const [selectedLobby, setSelectedLobby] = useState<GameLobby | null>(null)
-  const [gameResult, setGameResult] = useState<{ winner: string | null; reward: number } | null>(null)
-
-  // Game modes
-  const gameModes: GameMode[] = [
-    {
-      id: "duel",
-      name: "1v1 Duel",
-      description: "Face off against a single opponent in a 2-minute battle to the death",
-      players: 2,
-      icon: <Trophy className="h-6 w-6" />,
-      minWager: 1,
-    },
-    {
-      id: "ffa",
-      name: "Free-For-All",
-      description: "Every player for themselves in a 2-minute chaotic battle royale",
-      players: 4,
-      icon: <Users className="h-6 w-6" />,
-      minWager: 2,
-    },
-    {
-      id: "timed",
-      name: "Timed Match",
-      description: "Score as many kills as possible within 2 minutes",
-      players: 4,
-      icon: <Clock className="h-6 w-6" />,
-      minWager: 2,
-    },
-  ]
+  const [gameResult, setGameResult] = useState<{ winner: string; reward: number } | null>(null)
 
   // Mock lobbies
   const [lobbies, setLobbies] = useState<GameLobby[]>([
@@ -83,7 +53,6 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
       id: "lobby-1",
       host: "Player1",
       hostName: "CryptoGamer",
-      mode: "duel",
       wager: 5,
       players: 1,
       maxPlayers: 2,
@@ -93,28 +62,16 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
       id: "lobby-2",
       host: "Player2",
       hostName: "SolanaWarrior",
-      mode: "ffa",
       wager: 10,
-      players: 2,
-      maxPlayers: 4,
+      players: 1,
+      maxPlayers: 2,
       status: "waiting",
     },
     {
       id: "lobby-3",
       host: "Player3",
       hostName: "MUTBChampion",
-      mode: "timed",
       wager: 20,
-      players: 3,
-      maxPlayers: 4,
-      status: "waiting",
-    },
-    {
-      id: "lobby-4",
-      host: "Player4",
-      hostName: "TokenShooter",
-      mode: "duel",
-      wager: 50,
       players: 2,
       maxPlayers: 2,
       status: "full",
@@ -122,16 +79,6 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
   ])
 
   const createLobby = () => {
-    if (!selectedMode) return
-
-    const mode = gameModes.find((m) => m.id === selectedMode)
-    if (!mode) return
-
-    if (wagerAmount < mode.minWager) {
-      alert(`Minimum wager for ${mode.name} is ${mode.minWager} MUTB`)
-      return
-    }
-
     if (wagerAmount > mutbBalance) {
       alert("You don't have enough MUTB tokens for this wager")
       return
@@ -141,10 +88,9 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
       id: `lobby-${Date.now()}`,
       host: publicKey,
       hostName: playerName,
-      mode: selectedMode,
       wager: wagerAmount,
       players: 1,
-      maxPlayers: mode.players,
+      maxPlayers: 2,
       status: "waiting",
     }
 
@@ -160,17 +106,15 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
       return
     }
 
-    // In a real app, this would send a request to join the lobby
     setSelectedLobby(lobby)
     setInGame(true)
   }
 
-  const handleGameEnd = (winner: string | null) => {
+  const handleGameEnd = (winner: string) => {
     if (!selectedLobby) return
 
     // Calculate rewards
-    const totalPot = selectedLobby.wager * selectedLobby.maxPlayers
-    const winnerReward = totalPot * 0.95 // 5% platform fee
+    const winnerReward = selectedLobby.wager * 2 * 0.95 // 5% platform fee
 
     setGameResult({
       winner,
@@ -182,6 +126,9 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
     setInGame(false)
     setSelectedLobby(null)
     setGameResult(null)
+    if (onExit) {
+      onExit()
+    }
   }
 
   if (inGame) {
@@ -195,12 +142,9 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
           >
             Exit Game
           </Button>
-          <div className="flex items-center gap-2">
-            <GameInstructions />
-            <Badge variant="outline" className="bg-[#FFD54F] text-black border-2 border-black font-mono">
-              WAGER: {selectedLobby?.wager} MUTB
-            </Badge>
-          </div>
+          <Badge variant="outline" className="bg-[#FFD54F] text-black border-2 border-black font-mono">
+            WAGER: {selectedLobby?.wager} MUTB
+          </Badge>
         </div>
 
         {gameResult ? (
@@ -234,7 +178,9 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
           <GameController
             playerId={publicKey}
             playerName={playerName}
-            isHost={selectedLobby?.host === publicKey}
+            opponentId={selectedLobby?.host === publicKey ? "opponent" : selectedLobby?.host || "opponent"}
+            opponentName={selectedLobby?.host === publicKey ? "Opponent" : selectedLobby?.hostName || "Opponent"}
+            wagerAmount={selectedLobby?.wager || 0}
             onGameEnd={handleGameEnd}
           />
         )}
@@ -247,8 +193,8 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Gamepad2 className="h-5 w-5" />
-            <CardTitle className="font-mono">PVP ARENA</CardTitle>
+            <Trophy className="h-5 w-5" />
+            <CardTitle className="font-mono">TURN-BASED STRATEGY</CardTitle>
           </div>
           <Badge
             variant="outline"
@@ -258,7 +204,7 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
             {mutbBalance.toFixed(2)} MUTB
           </Badge>
         </div>
-        <CardDescription>Battle other players and win MUTB tokens</CardDescription>
+        <CardDescription>Battle other players in turn-based strategy and win MUTB tokens</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="browse" value={activeTab} onValueChange={setActiveTab}>
@@ -280,55 +226,52 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
           <TabsContent value="browse" className="space-y-4">
             {lobbies.length > 0 ? (
               <div className="space-y-3">
-                {lobbies.map((lobby) => {
-                  const mode = gameModes.find((m) => m.id === lobby.mode)
-                  return (
-                    <div
-                      key={lobby.id}
-                      className="flex items-center justify-between p-3 border-2 border-black rounded-md bg-[#f5efdc] hover:bg-[#f0e9d2] transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="bg-[#FFD54F] p-2 rounded-md border-2 border-black">
-                          {mode?.icon || <Gamepad2 className="h-5 w-5" />}
-                        </div>
-                        <div>
-                          <div className="font-bold font-mono">{mode?.name || "Unknown"}</div>
-                          <div className="text-sm text-muted-foreground">Host: {lobby.hostName}</div>
-                        </div>
+                {lobbies.map((lobby) => (
+                  <div
+                    key={lobby.id}
+                    className="flex items-center justify-between p-3 border-2 border-black rounded-md bg-[#f5efdc] hover:bg-[#f0e9d2] transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="bg-[#FFD54F] p-2 rounded-md border-2 border-black">
+                        <Trophy className="h-5 w-5" />
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-center">
-                          <div className="text-sm font-medium">Players</div>
-                          <div className="font-mono">
-                            {lobby.players}/{lobby.maxPlayers}
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-sm font-medium">Wager</div>
-                          <div className="font-mono flex items-center justify-center gap-1">
-                            <Image src="/images/mutable-token.png" alt="MUTB" width={12} height={12} />
-                            {lobby.wager}
-                          </div>
-                        </div>
-                        <Button
-                          className="bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
-                          disabled={lobby.status !== "waiting" || lobby.host === publicKey}
-                          onClick={() => joinLobby(lobby)}
-                        >
-                          {lobby.status === "full" || lobby.status === "in-progress"
-                            ? "FULL"
-                            : lobby.host === publicKey
-                              ? "YOUR GAME"
-                              : "JOIN"}
-                        </Button>
+                      <div>
+                        <div className="font-bold font-mono">Turn-Based Strategy</div>
+                        <div className="text-sm text-muted-foreground">Host: {lobby.hostName}</div>
                       </div>
                     </div>
-                  )
-                })}
+                    <div className="flex items-center gap-4">
+                      <div className="text-center">
+                        <div className="text-sm font-medium">Players</div>
+                        <div className="font-mono">
+                          {lobby.players}/{lobby.maxPlayers}
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-sm font-medium">Wager</div>
+                        <div className="font-mono flex items-center justify-center gap-1">
+                          <Image src="/images/mutable-token.png" alt="MUTB" width={12} height={12} />
+                          {lobby.wager}
+                        </div>
+                      </div>
+                      <Button
+                        className="bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
+                        disabled={lobby.status !== "waiting" || lobby.host === publicKey}
+                        onClick={() => joinLobby(lobby)}
+                      >
+                        {lobby.status === "full" || lobby.status === "in-progress"
+                          ? "FULL"
+                          : lobby.host === publicKey
+                            ? "YOUR GAME"
+                            : "JOIN"}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                <Gamepad2 className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                <Trophy className="h-12 w-12 mx-auto mb-2 opacity-20" />
                 <p className="font-mono">NO ACTIVE GAMES</p>
                 <p className="text-sm mt-2">Create a new game to start playing</p>
               </div>
@@ -337,48 +280,6 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
 
           <TabsContent value="create" className="space-y-4">
             <div className="space-y-4">
-              <div>
-                <Label htmlFor="playerName" className="font-mono">
-                  YOUR NAME
-                </Label>
-                <Input
-                  id="playerName"
-                  value={playerName}
-                  onChange={(e) => setPlayerName(e.target.value)}
-                  className="border-2 border-black"
-                  maxLength={15}
-                />
-              </div>
-
-              <div>
-                <Label className="font-mono">GAME MODE</Label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
-                  {gameModes.map((mode) => (
-                    <div
-                      key={mode.id}
-                      className={`p-3 border-2 rounded-md cursor-pointer transition-colors ${
-                        selectedMode === mode.id
-                          ? "border-black bg-[#FFD54F]"
-                          : "border-gray-300 bg-[#f5efdc] hover:border-black"
-                      }`}
-                      onClick={() => setSelectedMode(mode.id)}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="bg-white p-1 rounded-md border border-black">{mode.icon}</div>
-                        <div className="font-bold font-mono">{mode.name}</div>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{mode.description}</p>
-                      <div className="mt-2 text-sm">
-                        <span className="font-medium">Players:</span> {mode.players}
-                      </div>
-                      <div className="text-sm">
-                        <span className="font-medium">Min Wager:</span> {mode.minWager} MUTB
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               <div>
                 <Label htmlFor="wagerAmount" className="font-mono">
                   WAGER AMOUNT (MUTB)
@@ -400,6 +301,30 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">Your balance: {mutbBalance.toFixed(2)} MUTB</p>
               </div>
+
+              <div className="space-y-2">
+                <Label className="font-mono">GAME PREVIEW</Label>
+                <div className="border-2 border-black rounded-md p-4 bg-[#f5efdc]">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                    {UNITS.slice(0, 6).map((unit) => (
+                      <div key={unit.id} className="border border-gray-300 rounded-md p-2 bg-white text-center">
+                        <div className="relative w-full h-12 mb-1">
+                          <Image
+                            src={unit.sprite || "/placeholder.svg"}
+                            alt={unit.name}
+                            fill
+                            className="object-contain"
+                          />
+                        </div>
+                        <div className="text-xs font-semibold truncate">{unit.name}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm text-center mt-3">
+                    Command your units in turn-based tactical combat. Defeat your opponent to win the wager!
+                  </p>
+                </div>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
@@ -408,7 +333,7 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
         {activeTab === "create" ? (
           <Button
             className="w-full bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
-            disabled={!selectedMode || wagerAmount <= 0 || wagerAmount > mutbBalance}
+            disabled={wagerAmount <= 0 || wagerAmount > mutbBalance}
             onClick={createLobby}
           >
             CREATE GAME

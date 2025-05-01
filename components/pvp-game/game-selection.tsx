@@ -3,7 +3,7 @@
 import type React from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Gamepad2, Crosshair, WalletCardsIcon as Cards, CastleIcon as ChessKnight } from "lucide-react"
+import { Gamepad2, Crosshair, WalletCardsIcon as Cards } from "lucide-react"
 import Image from "next/image"
 import SoundButton from "../sound-button"
 
@@ -25,7 +25,7 @@ interface Game {
 }
 
 export default function GameSelection({ publicKey, balance, mutbBalance, onSelectGame }: GameSelectionProps) {
-  // Available games
+  // Available games - removed Turn-Based Strategy game
   const games: Game[] = [
     {
       id: "top-down-shooter",
@@ -44,15 +44,6 @@ export default function GameSelection({ publicKey, balance, mutbBalance, onSelec
       icon: <Cards className="h-5 w-5" />,
       status: "coming-soon",
       minWager: 5,
-    },
-    {
-      id: "turn-based-strategy",
-      name: "Turn-Based Strategy",
-      description: "Tactical turn-based battles on small maps with unique units, abilities and time periods",
-      image: "/placeholder.svg?height=120&width=200",
-      icon: <ChessKnight className="h-5 w-5" />,
-      status: "coming-soon",
-      minWager: 10,
     },
   ]
 
@@ -75,7 +66,7 @@ export default function GameSelection({ publicKey, balance, mutbBalance, onSelec
         <CardDescription>Select a game to play and wager MUTB tokens</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {games.map((game) => (
             <Card
               key={game.id}
