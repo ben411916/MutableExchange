@@ -3,13 +3,24 @@
 import { useState } from "react"
 import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
-import { Gamepad2, Coins, Crosshair, Trophy } from "lucide-react"
+import { Gamepad2, Coins, Crosshair } from "lucide-react"
 import MutableMarketplace from "./mutable-marketplace"
 import MatchmakingLobby from "./pvp-game/matchmaking-lobby"
-import TurnBasedMatchmaking from "./turn-based-game/matchmaking-lobby"
 import GameSelection from "./pvp-game/game-selection"
 import type { Connection } from "@solana/web3.js"
 import { Button } from "@/components/ui/button"
+import dynamic from "next/dynamic"
+
+// Dynamically import the TurnBasedMatchmaking component only when needed
+const TurnBasedMatchmaking = dynamic(() => import("./turn-based-game/matchmaking-lobby"), {
+  ssr: false,
+  loading: () => (
+    <div className="p-8 text-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-4"></div>
+      <p>Loading game...</p>
+    </div>
+  ),
+})
 
 interface MutablePlatformProps {
   publicKey: string
@@ -145,7 +156,6 @@ export default function MutablePlatform({ publicKey, balance, provider, connecti
                   Back to Games
                 </Button>
                 <div className="flex items-center gap-2">
-                  <Trophy className="h-5 w-5" />
                   <span className="font-bold font-mono">TURN-BASED STRATEGY</span>
                 </div>
               </div>

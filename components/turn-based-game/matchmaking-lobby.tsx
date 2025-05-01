@@ -9,10 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Trophy } from "lucide-react"
 import Image from "next/image"
-import dynamic from "next/dynamic"
 import { UNITS } from "./units"
 
-// Import GameController with SSR disabled
+// Import GameController with dynamic import
+import dynamic from "next/dynamic"
+
+// Use dynamic import with no SSR for the GameController
 const GameController = dynamic(() => import("./game-controller"), {
   ssr: false,
   loading: () => (

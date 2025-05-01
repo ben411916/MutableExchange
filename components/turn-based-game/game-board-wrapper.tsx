@@ -1,15 +1,11 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect, useRef } from "react"
-import dynamic from "next/dynamic"
 import { SimpleErrorBoundary } from "../simple-error-boundary"
 
-// Import GameBoard with SSR disabled to prevent hydration issues with Konva
-const GameBoard = dynamic(() => import("./game-board"), {
-  ssr: false,
-  loading: () => <GameBoardFallback />,
-})
-
+// Use a placeholder component while loading
 function GameBoardFallback() {
   return (
     <div className="w-[600px] h-[600px] bg-gray-100 flex items-center justify-center">
@@ -21,11 +17,21 @@ function GameBoardFallback() {
 export default function GameBoardWrapper(props: any) {
   const [isClient, setIsClient] = useState(false)
   const [renderAttempt, setRenderAttempt] = useState(0)
+  const [GameBoard, setGameBoard] = useState<React.ComponentType<any> | null>(null)
   const errorRef = useRef<Error | null>(null)
 
   useEffect(() => {
     setIsClient(true)
     console.log("GameBoardWrapper mounted")
+
+    // Dynamically import the GameBoard component
+    import("./game-board")
+      .then((module) => {
+        setGameBoard(() => module.default)
+      })
+      .catch((error) => {
+        console.error("Failed to load GameBoard:", error)
+      })
 
     return () => {
       console.log("GameBoardWrapper unmounted")
@@ -46,7 +52,7 @@ export default function GameBoardWrapper(props: any) {
     }, 0)
   }
 
-  if (!isClient) {
+  if (!isClient || !GameBoard) {
     return <GameBoardFallback />
   }
 
