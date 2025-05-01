@@ -3,7 +3,7 @@
 import type React from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Gamepad2, Crosshair, WalletCardsIcon as Cards } from "lucide-react"
+import { Gamepad2, Crosshair, WalletCardsIcon as Cards, Trophy } from "lucide-react"
 import Image from "next/image"
 import SoundButton from "../sound-button"
 
@@ -25,22 +25,31 @@ interface Game {
 }
 
 export default function GameSelection({ publicKey, balance, mutbBalance, onSelectGame }: GameSelectionProps) {
-  // Available games - removed Turn-Based Strategy game
+  // Available games - with Turn-Based Strategy as "coming soon"
   const games: Game[] = [
     {
       id: "top-down-shooter",
       name: "Top-Down Shooter",
       description: "Fast-paced arena shooter with physics-based projectiles and dodge mechanics",
-      image: "/placeholder.svg?height=120&width=200",
+      image: "/pixel-art-top-down-shooter.png",
       icon: <Crosshair className="h-5 w-5" />,
       status: "live",
       minWager: 1,
     },
     {
+      id: "turn-based-strategy",
+      name: "Turn-Based Strategy",
+      description: "Strategic combat with unique units, abilities, and tactical positioning",
+      image: "/pixel-art-strategy.png",
+      icon: <Trophy className="h-5 w-5" />,
+      status: "coming-soon",
+      minWager: 3,
+    },
+    {
       id: "deck-building",
       name: "Deck-Building Battle",
       description: "Strategic card game with skillful drafting and deck building before matches",
-      image: "/placeholder.svg?height=120&width=200",
+      image: "/placeholder.svg?key=6x9fw",
       icon: <Cards className="h-5 w-5" />,
       status: "coming-soon",
       minWager: 5,
@@ -66,7 +75,7 @@ export default function GameSelection({ publicKey, balance, mutbBalance, onSelec
         <CardDescription>Select a game to play and wager MUTB tokens</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {games.map((game) => (
             <Card
               key={game.id}
