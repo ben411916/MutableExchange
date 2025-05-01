@@ -9,6 +9,8 @@ import { Copy, Check, Wallet, TestTube, ChevronUp, ChevronDown } from "lucide-re
 import { Connection, clusterApiUrl, PublicKey } from "@solana/web3.js"
 import MutablePlatform from "./mutable-platform"
 import Image from "next/image"
+import SoundButton from "./sound-button"
+import { playIntroSound, initializeAudio } from "@/utils/sound-utils"
 
 // Define types for Phantom wallet
 type PhantomEvent = "connect" | "disconnect" | "accountChanged"
@@ -111,6 +113,20 @@ export default function MultiWalletConnector() {
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
+
+  // Initialize audio on component mount
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      initializeAudio()
+      document.removeEventListener("click", handleFirstInteraction)
+    }
+
+    document.addEventListener("click", handleFirstInteraction)
+
+    return () => {
+      document.removeEventListener("click", handleFirstInteraction)
+    }
+  }, [])
 
   // Check for available wallets
   useEffect(() => {
@@ -219,6 +235,7 @@ export default function MultiWalletConnector() {
       setActiveWallet("test")
       setIsTestMode(true)
       setBalance(5.0) // Set mock balance
+      playIntroSound() // Play intro sound
       return
     }
 
@@ -250,6 +267,7 @@ export default function MultiWalletConnector() {
         setProvider(walletProvider)
         setActiveWallet(walletType)
         setIsTestMode(false)
+        playIntroSound() // Play intro sound
       } else {
         console.log(`Already connected to ${walletType} Wallet`)
         // Make sure we have the publicKey even if already connected
@@ -259,6 +277,7 @@ export default function MultiWalletConnector() {
           setProvider(walletProvider)
           setActiveWallet(walletType)
           setIsTestMode(false)
+          playIntroSound() // Play intro sound
         }
       }
     } catch (error) {
@@ -446,36 +465,90 @@ export default function MultiWalletConnector() {
               ) : (
                 <div className="py-2">
                   <div className="grid grid-cols-1 gap-3">
-                    {wallets.map((wallet) => (
-                      <Button
-                        key={wallet.type}
-                        onClick={() => connectWallet(wallet.type)}
-                        disabled={loading || (wallet.type !== "test" && !wallet.available)}
-                        className={`w-full border-2 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono justify-start h-12 ${
-                          wallet.type === "test"
-                            ? "bg-purple-100 hover:bg-purple-200 border-purple-300"
-                            : "bg-[#FFD54F] hover:bg-[#FFCA28] border-black"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          {wallet.type === "test" ? (
-                            <TestTube className="h-5 w-5" />
-                          ) : (
-                            <Image
-                              src={wallet.icon || "/placeholder.svg"}
-                              alt={wallet.name}
-                              width={24}
-                              height={24}
-                              className="rounded-full"
-                            />
-                          )}
-                          <span>{wallet.name}</span>
-                          {wallet.type !== "test" && !wallet.available && (
-                            <span className="text-xs ml-auto">(Not Detected)</span>
-                          )}
-                        </div>
-                      </Button>
-                    ))}
+                    <SoundButton
+                      key={wallets[0].type}
+                      onClick={() => connectWallet(wallets[0].type)}
+                      disabled={loading || (wallets[0].type !== "test" && !wallets[0].available)}
+                      className={`w-full border-2 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono justify-start h-12 ${
+                        wallets[0].type === "test"
+                          ? "bg-purple-100 hover:bg-purple-200 border-purple-300"
+                          : "bg-[#FFD54F] hover:bg-[#FFCA28] border-black"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {wallets[0].type === "test" ? (
+                          <TestTube className="h-5 w-5" />
+                        ) : (
+                          <Image
+                            src={wallets[0].icon || "/placeholder.svg"}
+                            alt={wallets[0].name}
+                            width={24}
+                            height={24}
+                            className="rounded-full"
+                          />
+                        )}
+                        <span>{wallets[0].name}</span>
+                        {wallets[0].type !== "test" && !wallets[0].available && (
+                          <span className="text-xs ml-auto">(Not Detected)</span>
+                        )}
+                      </div>
+                    </SoundButton>
+                    <SoundButton
+                      key={wallets[1].type}
+                      onClick={() => connectWallet(wallets[1].type)}
+                      disabled={loading || (wallets[1].type !== "test" && !wallets[1].available)}
+                      className={`w-full border-2 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono justify-start h-12 ${
+                        wallets[1].type === "test"
+                          ? "bg-purple-100 hover:bg-purple-200 border-purple-300"
+                          : "bg-[#FFD54F] hover:bg-[#FFCA28] border-black"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {wallets[1].type === "test" ? (
+                          <TestTube className="h-5 w-5" />
+                        ) : (
+                          <Image
+                            src={wallets[1].icon || "/placeholder.svg"}
+                            alt={wallets[1].name}
+                            width={24}
+                            height={24}
+                            className="rounded-full"
+                          />
+                        )}
+                        <span>{wallets[1].name}</span>
+                        {wallets[1].type !== "test" && !wallets[1].available && (
+                          <span className="text-xs ml-auto">(Not Detected)</span>
+                        )}
+                      </div>
+                    </SoundButton>
+                    <SoundButton
+                      key={wallets[2].type}
+                      onClick={() => connectWallet(wallets[2].type)}
+                      disabled={loading || (wallets[2].type !== "test" && !wallets[2].available)}
+                      className={`w-full border-2 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono justify-start h-12 ${
+                        wallets[2].type === "test"
+                          ? "bg-purple-100 hover:bg-purple-200 border-purple-300"
+                          : "bg-[#FFD54F] hover:bg-[#FFCA28] border-black"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {wallets[2].type === "test" ? (
+                          <TestTube className="h-5 w-5" />
+                        ) : (
+                          <Image
+                            src={wallets[2].icon || "/placeholder.svg"}
+                            alt={wallets[2].name}
+                            width={24}
+                            height={24}
+                            className="rounded-full"
+                          />
+                        )}
+                        <span>{wallets[2].name}</span>
+                        {wallets[2].type !== "test" && !wallets[2].available && (
+                          <span className="text-xs ml-auto">(Not Detected)</span>
+                        )}
+                      </div>
+                    </SoundButton>
                   </div>
                 </div>
               )}
@@ -504,7 +577,7 @@ export default function MultiWalletConnector() {
                   </div>
                 </div>
               ) : (
-                <Button
+                <SoundButton
                   variant="outline"
                   className={`w-full border-2 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono ${
                     isTestMode ? "border-purple-300 hover:bg-purple-100" : "border-black hover:bg-[#FFD54F]"
@@ -512,7 +585,7 @@ export default function MultiWalletConnector() {
                   onClick={disconnectWallet}
                 >
                   DISCONNECT
-                </Button>
+                </SoundButton>
               )}
             </CardFooter>
           </>

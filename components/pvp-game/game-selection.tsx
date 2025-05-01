@@ -3,9 +3,9 @@
 import type React from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Gamepad2, Crosshair, WalletCardsIcon as Cards, CastleIcon as ChessKnight } from "lucide-react"
 import Image from "next/image"
+import SoundButton from "../sound-button"
 
 interface GameSelectionProps {
   publicKey: string
@@ -112,13 +112,13 @@ export default function GameSelection({ publicKey, balance, mutbBalance, onSelec
                 </div>
               </CardContent>
               <CardFooter className="p-3">
-                <Button
+                <SoundButton
                   className="w-full bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
                   disabled={game.status !== "live"}
                   onClick={() => onSelectGame(game.id)}
                 >
                   {game.status === "live" ? "PLAY NOW" : "COMING SOON"}
-                </Button>
+                </SoundButton>
               </CardFooter>
             </Card>
           ))}

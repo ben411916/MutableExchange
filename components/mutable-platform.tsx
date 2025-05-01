@@ -3,12 +3,12 @@
 import { useState } from "react"
 import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Gamepad2, Coins, Crosshair } from "lucide-react"
 import MutableMarketplace from "./mutable-marketplace"
 import MatchmakingLobby from "./pvp-game/matchmaking-lobby"
 import GameSelection from "./pvp-game/game-selection"
 import type { Connection } from "@solana/web3.js"
+import SoundButton from "./sound-button"
 
 interface MutablePlatformProps {
   publicKey: string
@@ -36,7 +36,7 @@ export default function MutablePlatform({ publicKey, balance, provider, connecti
               <h2 className="text-2xl font-bold text-center mb-6 font-mono">SELECT PLATFORM</h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button
+                <SoundButton
                   onClick={() => setSelectedPlatform("exchange")}
                   className="h-auto py-6 px-4 bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
                 >
@@ -45,9 +45,9 @@ export default function MutablePlatform({ publicKey, balance, provider, connecti
                     <span className="text-xl font-bold font-mono">MUTABLE EXCHANGE</span>
                     <span className="text-sm">Trade gaming currencies</span>
                   </div>
-                </Button>
+                </SoundButton>
 
-                <Button
+                <SoundButton
                   onClick={() => setSelectedPlatform("pvp")}
                   className="h-auto py-6 px-4 bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
                 >
@@ -56,7 +56,7 @@ export default function MutablePlatform({ publicKey, balance, provider, connecti
                     <span className="text-xl font-bold font-mono">MUTABLE PVP</span>
                     <span className="text-sm">Player vs Player gaming</span>
                   </div>
-                </Button>
+                </SoundButton>
               </div>
             </CardContent>
           </Card>
@@ -67,13 +67,13 @@ export default function MutablePlatform({ publicKey, balance, provider, connecti
       {selectedPlatform === "exchange" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <Button
+            <SoundButton
               onClick={() => setSelectedPlatform("none")}
               variant="outline"
               className="border-2 border-black text-black hover:bg-[#FFD54F] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
             >
               Back to Selection
-            </Button>
+            </SoundButton>
             <div className="flex items-center gap-2">
               <Image src="/images/mutable-token.png" alt="MUTB Token" width={32} height={32} />
               <span className="font-bold font-mono">MUTABLE EXCHANGE</span>
@@ -87,7 +87,7 @@ export default function MutablePlatform({ publicKey, balance, provider, connecti
       {selectedPlatform === "pvp" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <Button
+            <SoundButton
               onClick={() => {
                 setSelectedPlatform("none")
                 setSelectedGame(null)
@@ -96,7 +96,7 @@ export default function MutablePlatform({ publicKey, balance, provider, connecti
               className="border-2 border-black text-black hover:bg-[#FFD54F] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
             >
               Back to Selection
-            </Button>
+            </SoundButton>
             <div className="flex items-center gap-2">
               <Image src="/images/mutable-token.png" alt="MUTB Token" width={32} height={32} />
               <span className="font-bold font-mono">MUTABLE PVP</span>
@@ -113,13 +113,13 @@ export default function MutablePlatform({ publicKey, balance, provider, connecti
           ) : selectedGame === "top-down-shooter" ? (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <Button
+                <SoundButton
                   onClick={() => setSelectedGame(null)}
                   variant="outline"
                   className="border-2 border-black text-black hover:bg-[#FFD54F] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
                 >
                   Back to Games
-                </Button>
+                </SoundButton>
                 <div className="flex items-center gap-2">
                   <Crosshair className="h-5 w-5" />
                   <span className="font-bold font-mono">TOP-DOWN SHOOTER</span>
@@ -135,12 +135,12 @@ export default function MutablePlatform({ publicKey, balance, provider, connecti
                 <p className="text-center text-gray-700 max-w-md">
                   This game is currently in development and will be available soon!
                 </p>
-                <Button
+                <SoundButton
                   onClick={() => setSelectedGame(null)}
                   className="mt-8 bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
                 >
                   BACK TO GAMES
-                </Button>
+                </SoundButton>
               </CardContent>
             </Card>
           )}

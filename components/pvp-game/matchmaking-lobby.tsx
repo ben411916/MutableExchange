@@ -13,6 +13,7 @@ import { Gamepad2, Users, Trophy, Clock } from "lucide-react"
 import Image from "next/image"
 import GameController from "./game-controller"
 import GameInstructions from "./game-instructions"
+import SoundButton from "../sound-button"
 
 interface MatchmakingLobbyProps {
   publicKey: string
@@ -188,13 +189,13 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <Button
+          <SoundButton
             variant="outline"
             className="border-2 border-black text-black hover:bg-[#FFD54F] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
             onClick={exitGame}
           >
             Exit Game
-          </Button>
+          </SoundButton>
           <div className="flex items-center gap-2">
             <GameInstructions />
             <Badge variant="outline" className="bg-[#FFD54F] text-black border-2 border-black font-mono">
@@ -222,12 +223,12 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
               )}
             </CardContent>
             <CardFooter>
-              <Button
+              <SoundButton
                 className="w-full bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
                 onClick={exitGame}
               >
                 RETURN TO LOBBY
-              </Button>
+              </SoundButton>
             </CardFooter>
           </Card>
         ) : (
@@ -310,7 +311,7 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
                             {lobby.wager}
                           </div>
                         </div>
-                        <Button
+                        <SoundButton
                           className="bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
                           disabled={lobby.status !== "waiting" || lobby.host === publicKey}
                           onClick={() => joinLobby(lobby)}
@@ -320,7 +321,7 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
                             : lobby.host === publicKey
                               ? "YOUR GAME"
                               : "JOIN"}
-                        </Button>
+                        </SoundButton>
                       </div>
                     </div>
                   )
@@ -406,13 +407,13 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
       </CardContent>
       <CardFooter>
         {activeTab === "create" ? (
-          <Button
+          <SoundButton
             className="w-full bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
             disabled={!selectedMode || wagerAmount <= 0 || wagerAmount > mutbBalance}
             onClick={createLobby}
           >
             CREATE GAME
-          </Button>
+          </SoundButton>
         ) : (
           <Button
             className="w-full bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
