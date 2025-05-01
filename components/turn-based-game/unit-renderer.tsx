@@ -20,12 +20,16 @@ const UnitRenderer: React.FC<UnitRendererProps> = ({ unit, tileSize, isSelected,
   useEffect(() => {
     if (!unit.sprite) return
 
-    const img = new Image()
+    // Create a new image element
+    const img = new window.Image()
     img.src = unit.sprite
     img.crossOrigin = "anonymous"
+
+    // Set the image once it's loaded
     img.onload = () => {
       setImage(img)
     }
+
     img.onerror = () => {
       console.error(`Failed to load image: ${unit.sprite}`)
       // Don't set image, will use fallback rendering
