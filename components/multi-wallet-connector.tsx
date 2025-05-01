@@ -9,7 +9,6 @@ import { Copy, Check, Wallet } from "lucide-react"
 import { Connection, clusterApiUrl, PublicKey } from "@solana/web3.js"
 import MutablePlatform from "./mutable-platform"
 import Image from "next/image"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 // Define types for Phantom wallet
 type PhantomEvent = "connect" | "disconnect" | "accountChanged"
@@ -26,33 +25,34 @@ interface PhantomProvider {
   isPhantom: boolean
 }
 
-// Define types for MetaMask and Ethereum
-interface EthereumProvider {
-  isMetaMask?: boolean
-  isCoinbaseWallet?: boolean
-  selectedAddress: string
-  isConnected: () => boolean
-  request: (args: { method: string; params?: any[] }) => Promise<any>
-  on: (event: string, callback: (accounts: string[]) => void) => void
-  removeListener: (event: string, callback: (accounts: string[]) => void) => void
+// Define types for Solflare wallet
+interface SolflareProvider {
+  publicKey: { toString: () => string }
+  isConnected: boolean
+  signMessage: (message: Uint8Array) => Promise<{ signature: Uint8Array }>
+  signTransaction: (transaction: any) => Promise<any>
+  signAllTransactions: (transactions: any[]) => Promise<any[]>
+  connect: () => Promise<{ publicKey: { toString: () => string } }>
+  disconnect: () => Promise<void>
+  on: (event: PhantomEvent, callback: () => void) => void
+  isSolflare: boolean
 }
 
-type WindowWithWallets = Window & {
+type WindowWithSolana = Window & {
   solana?: PhantomProvider
-  ethereum?: EthereumProvider
+  solflare?: SolflareProvider
 }
 
-// Use devnet for Solana testing
-const solanaConnection = new Connection(clusterApiUrl("devnet"), "confirmed")
+// Use devnet for testing
+const connection = new Connection(clusterApiUrl("devnet"), "confirmed")
 
 // Wallet types
-type WalletType = "phantom" | "metamask" | "coinbase" | "walletconnect"
+type WalletType = "phantom" | "solflare"
 
 interface WalletInfo {
   name: string
   type: WalletType
   icon: string
-  network: "solana" | "ethereum"
   available: boolean
 }
 
@@ -63,323 +63,182 @@ export default function MultiWalletConnector() {
       name: "Phantom",
       type: "phantom",
       icon: "/images/phantom-icon.svg",
-      network: "solana",
       available: false,
     },
     {
-      name: "MetaMask",
-      type: "metamask",
-      icon: "/images/metamask-icon.jpg",
-      network: "ethereum",
-      available: false,
-    },
-    {
-      name: "Coinbase Wallet",
-      type: "coinbase",
-      icon: "/images/coinbase-icon.svg",
-      network: "ethereum",
-      available: false,
-    },
-    {
-      name: "WalletConnect",
-      type: "walletconnect",
-      icon: "/images/wallet-connect-icon.png",
-      network: "ethereum",
+      name: "Solflare",
+      type: "solflare",
+      icon: "/images/solflare-icon.png",
       available: false,
     },
   ])
 
-  // Solana wallet state
-  const [phantomProvider, setPhantomProvider] = useState<PhantomProvider | null>(null)
-  const [solanaConnected, setSolanaConnected] = useState(false)
-  const [solanaPublicKey, setSolanaPublicKey] = useState<string>("")
-  const [solanaBalance, setSolanaBalance] = useState<number | null>(null)
-
-  // Ethereum wallet state
-  const [ethereumProvider, setEthereumProvider] = useState<EthereumProvider | null>(null)
-  const [ethereumConnected, setEthereumConnected] = useState(false)
-  const [ethereumAddress, setEthereumAddress] = useState<string>("")
-  const [ethereumBalance, setEthereumBalance] = useState<string | null>(null)
+  // Wallet state
+  const [provider, setProvider] = useState<PhantomProvider | SolflareProvider | null>(null)
+  const [connected, setConnected] = useState(false)
+  const [publicKey, setPublicKey] = useState<string>("")
+  const [balance, setBalance] = useState<number | null>(null)
 
   // UI state
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [activeTab, setActiveTab] = useState<"solana" | "ethereum">("solana")
 
   // Check for available wallets
   useEffect(() => {
     const checkForWallets = async () => {
-      const windowWithWallets = window as WindowWithWallets
+      const solWindow = window as WindowWithSolana
 
-      // Check for Phantom (Solana)
-      const phantomAvailable = "solana" in window && windowWithWallets.solana?.isPhantom
+      // Check for Phantom
+      const phantomAvailable = "solana" in window && solWindow.solana?.isPhantom
 
-      // Check for Ethereum wallets
-      const ethereumAvailable = "ethereum" in window
-      const metamaskAvailable = ethereumAvailable && windowWithWallets.ethereum?.isMetaMask
-      const coinbaseAvailable = ethereumAvailable && windowWithWallets.ethereum?.isCoinbaseWallet
+      // Check for Solflare
+      const solflareAvailable = "solflare" in window && solWindow.solflare?.isSolflare
 
       setWallets((prev) =>
         prev.map((wallet) => {
           if (wallet.type === "phantom") {
             return { ...wallet, available: phantomAvailable }
-          } else if (wallet.type === "metamask") {
-            return { ...wallet, available: metamaskAvailable }
-          } else if (wallet.type === "coinbase") {
-            return { ...wallet, available: coinbaseAvailable }
+          } else if (wallet.type === "solflare") {
+            return { ...wallet, available: solflareAvailable }
           }
           return wallet
         }),
       )
 
-      // Set providers if available
-      if (phantomAvailable) {
-        setPhantomProvider(windowWithWallets.solana!)
-
-        // Check if already connected
-        if (windowWithWallets.solana!.isConnected && windowWithWallets.solana!.publicKey) {
-          setSolanaConnected(true)
-          setSolanaPublicKey(windowWithWallets.solana!.publicKey.toString())
-          setActiveWallet("phantom")
-          setActiveTab("solana")
-        }
+      // Check if already connected to Phantom
+      if (phantomAvailable && solWindow.solana!.isConnected && solWindow.solana!.publicKey) {
+        setProvider(solWindow.solana!)
+        setConnected(true)
+        setPublicKey(solWindow.solana!.publicKey.toString())
+        setActiveWallet("phantom")
       }
 
-      if (ethereumAvailable) {
-        setEthereumProvider(windowWithWallets.ethereum!)
-
-        // Check if already connected
-        if (windowWithWallets.ethereum!.selectedAddress) {
-          setEthereumConnected(true)
-          setEthereumAddress(windowWithWallets.ethereum!.selectedAddress)
-          setActiveWallet(metamaskAvailable ? "metamask" : "coinbase")
-          setActiveTab("ethereum")
-        }
+      // Check if already connected to Solflare
+      else if (solflareAvailable && solWindow.solflare!.isConnected && solWindow.solflare!.publicKey) {
+        setProvider(solWindow.solflare!)
+        setConnected(true)
+        setPublicKey(solWindow.solflare!.publicKey.toString())
+        setActiveWallet("solflare")
       }
     }
 
     checkForWallets()
   }, [])
 
-  // Set up Phantom event listeners
+  // Set up wallet event listeners
   useEffect(() => {
-    if (phantomProvider) {
-      phantomProvider.on("connect", () => {
-        setSolanaConnected(true)
-        if (phantomProvider.publicKey) {
-          setSolanaPublicKey(phantomProvider.publicKey.toString())
+    if (provider) {
+      provider.on("connect", () => {
+        setConnected(true)
+        if (provider.publicKey) {
+          setPublicKey(provider.publicKey.toString())
         }
       })
 
-      phantomProvider.on("disconnect", () => {
-        setSolanaConnected(false)
-        setSolanaPublicKey("")
-        setSolanaBalance(null)
-        if (activeWallet === "phantom") {
+      provider.on("disconnect", () => {
+        setConnected(false)
+        setPublicKey("")
+        setBalance(null)
+        setActiveWallet(null)
+      })
+
+      provider.on("accountChanged", () => {
+        if (provider.publicKey) {
+          setPublicKey(provider.publicKey.toString())
+        } else {
+          setConnected(false)
+          setPublicKey("")
+          setBalance(null)
           setActiveWallet(null)
         }
       })
-
-      phantomProvider.on("accountChanged", () => {
-        if (phantomProvider.publicKey) {
-          setSolanaPublicKey(phantomProvider.publicKey.toString())
-        } else {
-          setSolanaConnected(false)
-          setSolanaPublicKey("")
-          setSolanaBalance(null)
-          if (activeWallet === "phantom") {
-            setActiveWallet(null)
-          }
-        }
-      })
     }
-  }, [phantomProvider, activeWallet])
+  }, [provider])
 
-  // Set up Ethereum event listeners
+  // Fetch SOL balance when connected
   useEffect(() => {
-    if (ethereumProvider) {
-      const handleAccountsChanged = (accounts: string[]) => {
-        if (accounts.length === 0) {
-          // User disconnected
-          setEthereumConnected(false)
-          setEthereumAddress("")
-          setEthereumBalance(null)
-          if (activeWallet === "metamask" || activeWallet === "coinbase") {
-            setActiveWallet(null)
-          }
-        } else {
-          setEthereumConnected(true)
-          setEthereumAddress(accounts[0])
-        }
-      }
-
-      ethereumProvider.on("accountsChanged", handleAccountsChanged)
-
-      return () => {
-        ethereumProvider.removeListener("accountsChanged", handleAccountsChanged)
-      }
-    }
-  }, [ethereumProvider, activeWallet])
-
-  // Fetch Solana balance when connected
-  useEffect(() => {
-    const getSolanaBalance = async () => {
-      if (solanaConnected && solanaPublicKey) {
+    const getBalance = async () => {
+      if (connected && publicKey) {
         try {
-          const publicKeyObj = new PublicKey(solanaPublicKey)
-          const balance = await solanaConnection.getBalance(publicKeyObj)
-          setSolanaBalance(balance / 1e9) // Convert lamports to SOL
+          const publicKeyObj = new PublicKey(publicKey)
+          const balance = await connection.getBalance(publicKeyObj)
+          setBalance(balance / 1e9) // Convert lamports to SOL
         } catch (error) {
-          console.error("Error fetching Solana balance:", error)
-          setSolanaBalance(null)
+          console.error("Error fetching balance:", error)
+          setBalance(null)
         }
       }
     }
 
-    getSolanaBalance()
-  }, [solanaConnected, solanaPublicKey])
+    getBalance()
+  }, [connected, publicKey])
 
-  // Fetch Ethereum balance when connected
-  useEffect(() => {
-    const getEthereumBalance = async () => {
-      if (ethereumConnected && ethereumAddress && ethereumProvider) {
-        try {
-          const balance = await ethereumProvider.request({
-            method: "eth_getBalance",
-            params: [ethereumAddress, "latest"],
-          })
-
-          // Convert from wei to ETH
-          const ethBalance = Number.parseInt(balance, 16) / 1e18
-          setEthereumBalance(ethBalance.toFixed(4))
-        } catch (error) {
-          console.error("Error fetching Ethereum balance:", error)
-          setEthereumBalance(null)
-        }
-      }
-    }
-
-    getEthereumBalance()
-  }, [ethereumConnected, ethereumAddress, ethereumProvider])
-
-  // Connect to Phantom wallet
-  const connectPhantom = async () => {
-    if (!phantomProvider) {
-      alert("Phantom wallet not detected. Please ensure you have Phantom wallet extension installed and signed in.")
-      return
-    }
-
-    try {
-      setLoading(true)
-      if (!phantomProvider.isConnected) {
-        const response = await phantomProvider.connect()
-        setSolanaPublicKey(response.publicKey.toString())
-        setSolanaConnected(true)
-        setActiveWallet("phantom")
-        setActiveTab("solana")
-      } else {
-        console.log("Already connected to Phantom Wallet")
-        // Make sure we have the publicKey even if already connected
-        if (phantomProvider.publicKey) {
-          setSolanaPublicKey(phantomProvider.publicKey.toString())
-          setSolanaConnected(true)
-          setActiveWallet("phantom")
-          setActiveTab("solana")
-        }
-      }
-    } catch (error) {
-      console.error("Phantom connection error:", error)
-      if (error instanceof Error) {
-        alert(
-          `Connection failed: ${error.message}. Please ensure you have Phantom wallet extension installed and signed in.`,
-        )
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Connect to Ethereum wallet (MetaMask or Coinbase)
-  const connectEthereum = async (walletType: "metamask" | "coinbase") => {
-    // Check if ethereum is available in window
-    const windowWithWallets = window as WindowWithWallets
-    if (!windowWithWallets.ethereum) {
-      alert(
-        `${walletType === "metamask" ? "MetaMask" : "Coinbase Wallet"} not detected. Please ensure you have the extension installed and signed in.`,
-      )
-      return
-    }
-
-    try {
-      setLoading(true)
-      // Explicitly request ethereum accounts
-      const accounts = await windowWithWallets.ethereum.request({ method: "eth_requestAccounts" })
-
-      if (accounts.length > 0) {
-        setEthereumAddress(accounts[0])
-        setEthereumConnected(true)
-        setActiveWallet(walletType)
-        setActiveTab("ethereum")
-      }
-    } catch (error) {
-      console.error("Ethereum connection error:", error)
-      if (error instanceof Error) {
-        alert(
-          `Connection failed: ${error.message}. Please ensure you have ${
-            walletType === "metamask" ? "MetaMask" : "Coinbase Wallet"
-          } extension installed and signed in.`,
-        )
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Connect to WalletConnect
-  const connectWalletConnect = async () => {
-    alert("WalletConnect integration coming soon!")
-  }
-
-  // Connect to selected wallet
+  // Connect to wallet
   const connectWallet = async (walletType: WalletType) => {
-    // Prevent any cross-connection between wallet types
+    const solWindow = window as WindowWithSolana
+    let walletProvider: PhantomProvider | SolflareProvider | null = null
+
     if (walletType === "phantom") {
-      await connectPhantom()
-    } else if (walletType === "metamask" || walletType === "coinbase") {
-      await connectEthereum(walletType)
-    } else if (walletType === "walletconnect") {
-      await connectWalletConnect()
+      if (!solWindow.solana) {
+        alert("Phantom wallet not detected. Please ensure you have Phantom wallet extension installed and signed in.")
+        return
+      }
+      walletProvider = solWindow.solana
+    } else if (walletType === "solflare") {
+      if (!solWindow.solflare) {
+        alert("Solflare wallet not detected. Please ensure you have Solflare wallet extension installed and signed in.")
+        return
+      }
+      walletProvider = solWindow.solflare
+    }
+
+    if (!walletProvider) return
+
+    try {
+      setLoading(true)
+      if (!walletProvider.isConnected) {
+        const response = await walletProvider.connect()
+        setPublicKey(response.publicKey.toString())
+        setConnected(true)
+        setProvider(walletProvider)
+        setActiveWallet(walletType)
+      } else {
+        console.log(`Already connected to ${walletType} Wallet`)
+        // Make sure we have the publicKey even if already connected
+        if (walletProvider.publicKey) {
+          setPublicKey(walletProvider.publicKey.toString())
+          setConnected(true)
+          setProvider(walletProvider)
+          setActiveWallet(walletType)
+        }
+      }
+    } catch (error) {
+      console.error(`${walletType} connection error:`, error)
+      if (error instanceof Error) {
+        alert(
+          `Connection failed: ${error.message}. Please ensure you have ${walletType} wallet extension installed and signed in.`,
+        )
+      }
+    } finally {
+      setLoading(false)
     }
   }
 
-  // Disconnect from current wallet
+  // Disconnect from wallet
   const disconnectWallet = async () => {
-    if (activeWallet === "phantom" && phantomProvider) {
+    if (provider) {
       try {
-        await phantomProvider.disconnect()
-        setSolanaConnected(false)
-        setSolanaPublicKey("")
-        setSolanaBalance(null)
-        setActiveWallet(null)
+        await provider.disconnect()
       } catch (error) {
-        console.error("Phantom disconnection error:", error)
+        console.error("Disconnection error:", error)
       }
-    } else if ((activeWallet === "metamask" || activeWallet === "coinbase") && ethereumProvider) {
-      // For Ethereum wallets, there's no standard disconnect method
-      // We'll just reset our state
-      setEthereumConnected(false)
-      setEthereumAddress("")
-      setEthereumBalance(null)
-      setActiveWallet(null)
     }
   }
 
   // Copy address to clipboard
   const copyAddress = async () => {
-    const addressToCopy = activeTab === "solana" ? solanaPublicKey : ethereumAddress
-
-    if (addressToCopy) {
-      await navigator.clipboard.writeText(addressToCopy)
+    if (publicKey) {
+      await navigator.clipboard.writeText(publicKey)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
@@ -390,25 +249,9 @@ export default function MultiWalletConnector() {
     return `${address.slice(0, 4)}...${address.slice(-4)}`
   }
 
-  // Get connected status based on active tab
-  const isConnected = activeTab === "solana" ? solanaConnected : ethereumConnected
-
-  // Get address based on active tab
-  const address = activeTab === "solana" ? solanaPublicKey : ethereumAddress
-
-  // Get balance based on active tab
-  const balance =
-    activeTab === "solana"
-      ? solanaBalance !== null
-        ? `${solanaBalance} SOL`
-        : null
-      : ethereumBalance !== null
-        ? `${ethereumBalance} ETH`
-        : null
-
   return (
     <div className="space-y-6">
-      {!activeWallet && (
+      {!connected && (
         <div className="flex justify-center mb-6">
           <Image src="/images/mutable-logo.png" alt="Mutable Logo" width={200} height={200} />
         </div>
@@ -418,117 +261,52 @@ export default function MultiWalletConnector() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-mono">
             <Wallet className="h-5 w-5" />
-            CONNECT WALLET
+            SOLANA WALLET
           </CardTitle>
-          <CardDescription>Connect your wallet to use Mutable</CardDescription>
+          <CardDescription>Connect your Solana wallet to use Mutable</CardDescription>
         </CardHeader>
-
         <CardContent className="space-y-4">
-          {activeWallet ? (
-            <Tabs
-              defaultValue={activeTab}
-              value={activeTab}
-              onValueChange={(value) => setActiveTab(value as "solana" | "ethereum")}
-            >
-              <TabsList className="mb-4 border-2 border-black bg-[#FFD54F]">
-                <TabsTrigger
-                  value="solana"
-                  className="data-[state=active]:bg-white data-[state=active]:text-black font-mono"
-                  disabled={!solanaConnected}
-                >
-                  SOLANA
-                </TabsTrigger>
-                <TabsTrigger
-                  value="ethereum"
-                  className="data-[state=active]:bg-white data-[state=active]:text-black font-mono"
-                  disabled={!ethereumConnected}
-                >
-                  ETHEREUM
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="solana" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Wallet:</span>
-                  <div className="flex items-center gap-2">
-                    <Image
-                      src="/images/phantom-icon.svg"
-                      alt="Phantom"
-                      width={20}
-                      height={20}
-                      className="rounded-full"
-                    />
-                    <Badge variant="outline" className="bg-[#FFD54F] text-black border-2 border-black font-mono">
-                      PHANTOM
-                    </Badge>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Address:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-mono">{shortenAddress(solanaPublicKey)}</span>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copyAddress}>
-                      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Status:</span>
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-mono">
-                    CONNECTED
+          {connected ? (
+            <>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Wallet:</span>
+                <div className="flex items-center gap-2">
+                  <Image
+                    src={activeWallet === "phantom" ? "/images/phantom-icon.svg" : "/images/solflare-icon.png"}
+                    alt={activeWallet === "phantom" ? "Phantom" : "Solflare"}
+                    width={20}
+                    height={20}
+                    className="rounded-full"
+                  />
+                  <Badge variant="outline" className="bg-[#FFD54F] text-black border-2 border-black font-mono">
+                    {activeWallet?.toUpperCase()}
                   </Badge>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Balance:</span>
-                  {solanaBalance !== null ? (
-                    <span className="font-mono">{solanaBalance} SOL</span>
-                  ) : (
-                    <Skeleton className="h-4 w-20" />
-                  )}
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Address:</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-mono">{shortenAddress(publicKey)}</span>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copyAddress}>
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
                 </div>
-              </TabsContent>
-
-              <TabsContent value="ethereum" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Wallet:</span>
-                  <div className="flex items-center gap-2">
-                    <Image
-                      src={activeWallet === "metamask" ? "/images/metamask-icon.jpg" : "/images/coinbase-icon.svg"}
-                      alt={activeWallet === "metamask" ? "MetaMask" : "Coinbase"}
-                      width={20}
-                      height={20}
-                      className="rounded-full"
-                    />
-                    <Badge variant="outline" className="bg-[#FFD54F] text-black border-2 border-black font-mono">
-                      {activeWallet === "metamask" ? "METAMASK" : "COINBASE"}
-                    </Badge>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Address:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-mono">{shortenAddress(ethereumAddress)}</span>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copyAddress}>
-                      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Status:</span>
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-mono">
-                    CONNECTED
-                  </Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Balance:</span>
-                  {ethereumBalance !== null ? (
-                    <span className="font-mono">{ethereumBalance} ETH</span>
-                  ) : (
-                    <Skeleton className="h-4 w-20" />
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Status:</span>
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-mono">
+                  CONNECTED
+                </Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Balance:</span>
+                {balance !== null ? (
+                  <span className="font-mono">{balance} SOL</span>
+                ) : (
+                  <Skeleton className="h-4 w-20" />
+                )}
+              </div>
+            </>
           ) : (
             <div className="py-2">
               <div className="grid grid-cols-1 gap-3">
@@ -556,9 +334,30 @@ export default function MultiWalletConnector() {
             </div>
           )}
         </CardContent>
-
-        {activeWallet && (
-          <CardFooter>
+        <CardFooter>
+          {!connected ? (
+            <div className="text-center w-full text-sm text-muted-foreground">
+              <p>Don't have a Solana wallet?</p>
+              <div className="flex justify-center gap-4 mt-2">
+                <a
+                  href="https://phantom.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  Get Phantom
+                </a>
+                <a
+                  href="https://solflare.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  Get Solflare
+                </a>
+              </div>
+            </div>
+          ) : (
             <Button
               variant="outline"
               className="w-full border-2 border-black text-black hover:bg-[#FFD54F] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
@@ -566,24 +365,12 @@ export default function MultiWalletConnector() {
             >
               DISCONNECT
             </Button>
-          </CardFooter>
-        )}
+          )}
+        </CardFooter>
       </Card>
 
-      {activeWallet === "phantom" && solanaConnected && (
-        <MutablePlatform
-          publicKey={solanaPublicKey}
-          balance={solanaBalance}
-          provider={phantomProvider}
-          connection={solanaConnection}
-        />
-      )}
-
-      {(activeWallet === "metamask" || activeWallet === "coinbase") && ethereumConnected && (
-        <Card className="bg-[#fbf3de] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-6 text-center">
-          <h2 className="text-xl font-bold font-mono mb-4">ETHEREUM SUPPORT COMING SOON</h2>
-          <p>Mutable is currently only available on Solana. Ethereum integration is coming soon!</p>
-        </Card>
+      {connected && (
+        <MutablePlatform publicKey={publicKey} balance={balance} provider={provider} connection={connection} />
       )}
     </div>
   )
