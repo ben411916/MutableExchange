@@ -4,7 +4,7 @@ import type React from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Gamepad2, Crosshair, Swords, Trophy } from "lucide-react"
+import { Gamepad2, Crosshair, WalletCardsIcon as Cards, CastleIcon as ChessKnight } from "lucide-react"
 import Image from "next/image"
 
 interface GameSelectionProps {
@@ -37,20 +37,20 @@ export default function GameSelection({ publicKey, balance, mutbBalance, onSelec
       minWager: 1,
     },
     {
-      id: "battle-royale",
-      name: "Battle Royale",
-      description: "Last player standing wins in this shrinking arena combat game",
+      id: "deck-building",
+      name: "Deck-Building Battle",
+      description: "Strategic card game with skillful drafting and deck building before matches",
       image: "/placeholder.svg?height=120&width=200",
-      icon: <Swords className="h-5 w-5" />,
+      icon: <Cards className="h-5 w-5" />,
       status: "coming-soon",
       minWager: 5,
     },
     {
-      id: "tournament",
-      name: "Tournament Mode",
-      description: "Compete in brackets to win massive MUTB prize pools",
+      id: "turn-based-strategy",
+      name: "Turn-Based Strategy",
+      description: "Tactical turn-based battles on small maps with unique unit abilities",
       image: "/placeholder.svg?height=120&width=200",
-      icon: <Trophy className="h-5 w-5" />,
+      icon: <ChessKnight className="h-5 w-5" />,
       status: "coming-soon",
       minWager: 10,
     },
