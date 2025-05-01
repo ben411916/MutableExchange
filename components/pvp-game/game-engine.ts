@@ -35,6 +35,7 @@ export interface Player extends GameObject {
   }
 }
 
+// Update the GameState interface to include maxGameTime
 export interface GameState {
   players: Record<string, Player>
   bullets: GameObject[]
@@ -42,10 +43,12 @@ export interface GameState {
   pickups: GameObject[]
   arenaSize: { width: number; height: number }
   gameTime: number
+  maxGameTime: number
   isGameOver: boolean
   winner: string | null
 }
 
+// Update the createInitialGameState function to include maxGameTime
 export const createInitialGameState = (): GameState => {
   return {
     players: {},
@@ -54,6 +57,7 @@ export const createInitialGameState = (): GameState => {
     pickups: [],
     arenaSize: { width: 800, height: 600 },
     gameTime: 0,
+    maxGameTime: 120, // 2 minutes in seconds
     isGameOver: false,
     winner: null,
   }
@@ -195,9 +199,34 @@ export const generateWalls = (): GameObject[] => {
   return walls
 }
 
+// Update the updateGameState function to check for time limit
 export const updateGameState = (state: GameState, deltaTime: number): GameState => {
   const newState = { ...state }
   newState.gameTime += deltaTime
+
+  // Check if time limit is reached
+  if (newState.gameTime >= newState.maxGameTime && !newState.isGameOver) {
+    newState.isGameOver = true
+
+    // Determine winner based on kills/score
+    let highestScore = -1
+    let winner: string | null = null
+
+    Object.entries(newState.players).forEach(([playerId, player]) => {
+      if (player.kills > highestScore) {
+        highestScore = player.kills
+        winner = playerId
+      } else if (player.kills === highestScore) {
+        // In case of a tie, check score
+        if (player.score > (newState.players[winner as string]?.score || 0)) {
+          winner = playerId
+        }
+      }
+    })
+
+    newState.winner = winner
+    return newState
+  }
 
   // Update players
   Object.keys(newState.players).forEach((playerId) => {

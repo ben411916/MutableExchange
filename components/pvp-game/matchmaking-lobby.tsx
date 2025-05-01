@@ -54,7 +54,7 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
     {
       id: "duel",
       name: "1v1 Duel",
-      description: "Face off against a single opponent in a battle to the death",
+      description: "Face off against a single opponent in a 2-minute battle to the death",
       players: 2,
       icon: <Trophy className="h-6 w-6" />,
       minWager: 1,
@@ -62,7 +62,7 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
     {
       id: "ffa",
       name: "Free-For-All",
-      description: "Every player for themselves in a chaotic battle royale",
+      description: "Every player for themselves in a 2-minute chaotic battle royale",
       players: 4,
       icon: <Users className="h-6 w-6" />,
       minWager: 2,
@@ -70,7 +70,7 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
     {
       id: "timed",
       name: "Timed Match",
-      description: "Score as many kills as possible within the time limit",
+      description: "Score as many kills as possible within 2 minutes",
       players: 4,
       icon: <Clock className="h-6 w-6" />,
       minWager: 2,

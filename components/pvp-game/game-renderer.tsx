@@ -166,12 +166,13 @@ export default function GameRenderer({ gameState, localPlayerId }: GameRendererP
     ctx.fillStyle = "#ffffff"
     ctx.fillText("DASH", 130, 150)
 
-    // Draw game time
-    const minutes = Math.floor(gameState.gameTime / 60)
-    const seconds = Math.floor(gameState.gameTime % 60)
+    // Draw remaining time
+    const remainingTime = Math.max(0, gameState.maxGameTime - gameState.gameTime)
+    const minutes = Math.floor(remainingTime / 60)
+    const seconds = Math.floor(remainingTime % 60)
     ctx.textAlign = "center"
     ctx.fillText(
-      `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`,
+      `TIME: ${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`,
       gameState.arenaSize.width / 2,
       30,
     )

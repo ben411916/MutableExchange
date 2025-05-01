@@ -42,7 +42,10 @@ export default function GameInstructions() {
           </div>
           <div>
             <h3 className="font-bold mb-1">Objective</h3>
-            <p>Eliminate other players to earn points. Last player standing wins the match and the MUTB token pot!</p>
+            <p>
+              Eliminate other players to earn points. The player with the most kills after 2 minutes or the last player
+              standing wins the match and the MUTB token pot!
+            </p>
           </div>
         </div>
       </DialogContent>
