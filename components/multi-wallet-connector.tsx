@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Copy, Check, Wallet } from "lucide-react"
+import { Copy, Check, Wallet, TestTube } from "lucide-react"
 import { Connection, clusterApiUrl, PublicKey } from "@solana/web3.js"
 import MutablePlatform from "./mutable-platform"
 import Image from "next/image"
@@ -47,13 +47,34 @@ type WindowWithSolana = Window & {
 const connection = new Connection(clusterApiUrl("devnet"), "confirmed")
 
 // Wallet types
-type WalletType = "phantom" | "solflare"
+type WalletType = "phantom" | "solflare" | "test"
 
 interface WalletInfo {
   name: string
   type: WalletType
   icon: string
   available: boolean
+}
+
+// Mock provider for test mode
+const createMockProvider = () => {
+  const mockPublicKey = {
+    toString: () => "TestModeWallet1111111111111111111111111",
+  }
+
+  return {
+    publicKey: mockPublicKey,
+    isConnected: true,
+    signMessage: async (message: Uint8Array) => ({ signature: new Uint8Array([1, 2, 3]) }),
+    signTransaction: async (transaction: any) => transaction,
+    signAllTransactions: async (transactions: any[]) => transactions,
+    connect: async () => ({ publicKey: mockPublicKey }),
+    disconnect: async () => {},
+    on: (event: PhantomEvent, callback: () => void) => {},
+    isPhantom: false,
+    isSolflare: false,
+    isTestMode: true,
+  }
 }
 
 export default function MultiWalletConnector() {
@@ -71,13 +92,20 @@ export default function MultiWalletConnector() {
       icon: "/images/solflare-icon.png",
       available: false,
     },
+    {
+      name: "Test Mode",
+      type: "test",
+      icon: "/placeholder.svg?height=24&width=24",
+      available: true,
+    },
   ])
 
   // Wallet state
-  const [provider, setProvider] = useState<PhantomProvider | SolflareProvider | null>(null)
+  const [provider, setProvider] = useState<PhantomProvider | SolflareProvider | any>(null)
   const [connected, setConnected] = useState(false)
   const [publicKey, setPublicKey] = useState<string>("")
   const [balance, setBalance] = useState<number | null>(null)
+  const [isTestMode, setIsTestMode] = useState(false)
 
   // UI state
   const [loading, setLoading] = useState(false)
@@ -127,7 +155,7 @@ export default function MultiWalletConnector() {
 
   // Set up wallet event listeners
   useEffect(() => {
-    if (provider) {
+    if (provider && !isTestMode) {
       provider.on("connect", () => {
         setConnected(true)
         if (provider.publicKey) {
@@ -153,12 +181,18 @@ export default function MultiWalletConnector() {
         }
       })
     }
-  }, [provider])
+  }, [provider, isTestMode])
 
   // Fetch SOL balance when connected
   useEffect(() => {
     const getBalance = async () => {
       if (connected && publicKey) {
+        if (isTestMode) {
+          // Set mock balance for test mode
+          setBalance(5.0)
+          return
+        }
+
         try {
           const publicKeyObj = new PublicKey(publicKey)
           const balance = await connection.getBalance(publicKeyObj)
@@ -171,10 +205,22 @@ export default function MultiWalletConnector() {
     }
 
     getBalance()
-  }, [connected, publicKey])
+  }, [connected, publicKey, isTestMode])
 
   // Connect to wallet
   const connectWallet = async (walletType: WalletType) => {
+    // Handle test mode
+    if (walletType === "test") {
+      const mockProvider = createMockProvider()
+      setProvider(mockProvider)
+      setPublicKey(mockProvider.publicKey.toString())
+      setConnected(true)
+      setActiveWallet("test")
+      setIsTestMode(true)
+      setBalance(5.0) // Set mock balance
+      return
+    }
+
     const solWindow = window as WindowWithSolana
     let walletProvider: PhantomProvider | SolflareProvider | null = null
 
@@ -202,6 +248,7 @@ export default function MultiWalletConnector() {
         setConnected(true)
         setProvider(walletProvider)
         setActiveWallet(walletType)
+        setIsTestMode(false)
       } else {
         console.log(`Already connected to ${walletType} Wallet`)
         // Make sure we have the publicKey even if already connected
@@ -210,6 +257,7 @@ export default function MultiWalletConnector() {
           setConnected(true)
           setProvider(walletProvider)
           setActiveWallet(walletType)
+          setIsTestMode(false)
         }
       }
     } catch (error) {
@@ -226,6 +274,17 @@ export default function MultiWalletConnector() {
 
   // Disconnect from wallet
   const disconnectWallet = async () => {
+    if (isTestMode) {
+      // Just reset state for test mode
+      setConnected(false)
+      setPublicKey("")
+      setBalance(null)
+      setActiveWallet(null)
+      setIsTestMode(false)
+      setProvider(null)
+      return
+    }
+
     if (provider) {
       try {
         await provider.disconnect()
@@ -271,16 +330,30 @@ export default function MultiWalletConnector() {
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Wallet:</span>
                 <div className="flex items-center gap-2">
-                  <Image
-                    src={activeWallet === "phantom" ? "/images/phantom-icon.svg" : "/images/solflare-icon.png"}
-                    alt={activeWallet === "phantom" ? "Phantom" : "Solflare"}
-                    width={20}
-                    height={20}
-                    className="rounded-full"
-                  />
-                  <Badge variant="outline" className="bg-[#FFD54F] text-black border-2 border-black font-mono">
-                    {activeWallet?.toUpperCase()}
-                  </Badge>
+                  {isTestMode ? (
+                    <>
+                      <TestTube className="h-5 w-5 text-purple-500" />
+                      <Badge
+                        variant="outline"
+                        className="bg-purple-100 text-purple-800 border-2 border-purple-300 font-mono"
+                      >
+                        TEST MODE
+                      </Badge>
+                    </>
+                  ) : (
+                    <>
+                      <Image
+                        src={activeWallet === "phantom" ? "/images/phantom-icon.svg" : "/images/solflare-icon.png"}
+                        alt={activeWallet === "phantom" ? "Phantom" : "Solflare"}
+                        width={20}
+                        height={20}
+                        className="rounded-full"
+                      />
+                      <Badge variant="outline" className="bg-[#FFD54F] text-black border-2 border-black font-mono">
+                        {activeWallet?.toUpperCase()}
+                      </Badge>
+                    </>
+                  )}
                 </div>
               </div>
               <div className="flex justify-between items-center">
@@ -306,6 +379,12 @@ export default function MultiWalletConnector() {
                   <Skeleton className="h-4 w-20" />
                 )}
               </div>
+              {isTestMode && (
+                <div className="bg-purple-50 p-3 rounded-md border border-purple-200 text-sm text-purple-800">
+                  <p className="font-medium mb-1">Test Mode Active</p>
+                  <p>You're using a simulated wallet for testing. No real transactions will be made.</p>
+                </div>
+              )}
             </>
           ) : (
             <div className="py-2">
@@ -314,19 +393,29 @@ export default function MultiWalletConnector() {
                   <Button
                     key={wallet.type}
                     onClick={() => connectWallet(wallet.type)}
-                    disabled={loading || !wallet.available}
-                    className="w-full bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono justify-start h-12"
+                    disabled={loading || (wallet.type !== "test" && !wallet.available)}
+                    className={`w-full border-2 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono justify-start h-12 ${
+                      wallet.type === "test"
+                        ? "bg-purple-100 hover:bg-purple-200 border-purple-300"
+                        : "bg-[#FFD54F] hover:bg-[#FFCA28] border-black"
+                    }`}
                   >
                     <div className="flex items-center gap-2">
-                      <Image
-                        src={wallet.icon || "/placeholder.svg"}
-                        alt={wallet.name}
-                        width={24}
-                        height={24}
-                        className="rounded-full"
-                      />
+                      {wallet.type === "test" ? (
+                        <TestTube className="h-5 w-5" />
+                      ) : (
+                        <Image
+                          src={wallet.icon || "/placeholder.svg"}
+                          alt={wallet.name}
+                          width={24}
+                          height={24}
+                          className="rounded-full"
+                        />
+                      )}
                       <span>{wallet.name}</span>
-                      {!wallet.available && <span className="text-xs ml-auto">(Not Detected)</span>}
+                      {wallet.type !== "test" && !wallet.available && (
+                        <span className="text-xs ml-auto">(Not Detected)</span>
+                      )}
                     </div>
                   </Button>
                 ))}
@@ -360,7 +449,9 @@ export default function MultiWalletConnector() {
           ) : (
             <Button
               variant="outline"
-              className="w-full border-2 border-black text-black hover:bg-[#FFD54F] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
+              className={`w-full border-2 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono ${
+                isTestMode ? "border-purple-300 hover:bg-purple-100" : "border-black hover:bg-[#FFD54F]"
+              }`}
               onClick={disconnectWallet}
             >
               DISCONNECT
