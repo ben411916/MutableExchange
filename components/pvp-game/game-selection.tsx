@@ -48,7 +48,7 @@ export default function GameSelection({ publicKey, balance, mutbBalance, onSelec
     {
       id: "turn-based-strategy",
       name: "Turn-Based Strategy",
-      description: "Tactical turn-based battles on small maps with unique unit abilities",
+      description: "Tactical turn-based battles on small maps with unique units, abilities and time periods",
       image: "/placeholder.svg?height=120&width=200",
       icon: <ChessKnight className="h-5 w-5" />,
       status: "coming-soon",
