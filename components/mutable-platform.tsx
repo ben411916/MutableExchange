@@ -4,10 +4,10 @@ import { useState } from "react"
 import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Gamepad2, ArrowRightCircle, Coins } from "lucide-react"
+import { Gamepad2, Coins } from "lucide-react"
 import MutableMarketplace from "./mutable-marketplace"
+import MatchmakingLobby from "./pvp-game/matchmaking-lobby"
 import type { Connection } from "@solana/web3.js"
-import Link from "next/link"
 
 interface MutablePlatformProps {
   publicKey: string
@@ -18,6 +18,7 @@ interface MutablePlatformProps {
 
 export default function MutablePlatform({ publicKey, balance, provider, connection }: MutablePlatformProps) {
   const [selectedPlatform, setSelectedPlatform] = useState<"none" | "exchange" | "pvp">("none")
+  const [mutbBalance, setMutbBalance] = useState<number>(25) // Mock MUTB balance for demo
 
   return (
     <div className="space-y-6">
@@ -51,7 +52,7 @@ export default function MutablePlatform({ publicKey, balance, provider, connecti
                   <div className="flex flex-col items-center gap-3">
                     <Gamepad2 size={32} />
                     <span className="text-xl font-bold font-mono">MUTABLE PVP</span>
-                    <span className="text-sm">Player vs Player betting</span>
+                    <span className="text-sm">Player vs Player gaming</span>
                   </div>
                 </Button>
               </div>
@@ -80,7 +81,7 @@ export default function MutablePlatform({ publicKey, balance, provider, connecti
         </div>
       )}
 
-      {/* PvP Platform - Coming Soon */}
+      {/* PvP Platform */}
       {selectedPlatform === "pvp" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -97,26 +98,7 @@ export default function MutablePlatform({ publicKey, balance, provider, connecti
             </div>
           </div>
 
-          <Card className="bg-[#fbf3de] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <CardContent className="p-12 flex flex-col items-center justify-center">
-              <Gamepad2 size={64} className="mb-4 text-gray-700" />
-              <h2 className="text-3xl font-bold font-mono text-center mb-2">COMING SOON</h2>
-              <p className="text-center text-gray-700 max-w-md">
-                Player vs Player betting will allow you to wager MUTB tokens on your gaming skills. Challenge other
-                players and win big!
-              </p>
-
-              <Link
-                href="https://www.mutable.live/preregister"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-8 flex items-center gap-2 bg-[#FFD54F] px-4 py-2 rounded-md border-2 border-black hover:bg-[#FFCA28] transition-colors"
-              >
-                <ArrowRightCircle size={20} />
-                <span className="font-medium">Join our waitlist for early access</span>
-              </Link>
-            </CardContent>
-          </Card>
+          <MatchmakingLobby publicKey={publicKey} balance={balance} mutbBalance={mutbBalance} />
         </div>
       )}
     </div>
