@@ -3,6 +3,14 @@
 import { useEffect, useRef, useState } from "react"
 import { createInitialGameState, createPlayer, type GameState, updateGameState } from "./game-engine"
 import GameRenderer from "./game-renderer"
+import DebugOverlay from "./debug-overlay"
+import {
+  playBowDrawSound,
+  playBowReleaseSound,
+  playBowFullDrawSound,
+  playSpecialAttackSound,
+  loadAudioFiles,
+} from "@/utils/audio-manager"
 
 interface GameControllerProps {
   playerId: string
@@ -16,9 +24,25 @@ export default function GameController({ playerId, playerName, isHost, onGameEnd
   const gameStateRef = useRef<GameState>(gameState)
   const lastUpdateTimeRef = useRef<number>(Date.now())
   const requestAnimationFrameIdRef = useRef<number>(0)
+  const bowSoundPlayedRef = useRef<boolean>(false)
+  const fullDrawSoundPlayedRef = useRef<boolean>(false)
+  const specialSoundPlayedRef = useRef<boolean>(false)
+  const audioLoadedRef = useRef<boolean>(false)
+  const [showDebug, setShowDebug] = useState<boolean>(false)
 
   // Initialize game
   useEffect(() => {
+    // Load audio files - but don't wait for them to complete
+    loadAudioFiles()
+      .then(() => {
+        audioLoadedRef.current = true
+        console.log("Audio files loaded successfully")
+      })
+      .catch((err) => {
+        console.error("Error loading audio files, continuing without sound:", err)
+        // Game will continue without sound
+      })
+
     // Create local player
     const playerColors = ["#FF5252", "#4CAF50", "#2196F3", "#FFC107"]
     const playerPositions = [
@@ -38,6 +62,7 @@ export default function GameController({ playerId, playerName, isHost, onGameEnd
       playerPositions[playerIndex],
       playerColors[playerIndex],
     )
+    console.log(`Created player with color: ${playerColors[playerIndex]}`)
 
     // Add AI players for testing
     if (isHost) {
@@ -58,6 +83,52 @@ export default function GameController({ playerId, playerName, isHost, onGameEnd
 
       // Update game state
       const newState = updateGameState(gameStateRef.current, deltaTime)
+
+      // Check for sound effects for the local player
+      const localPlayer = newState.players[playerId]
+      if (localPlayer && audioLoadedRef.current) {
+        // Only try to play sounds if audio is loaded
+        try {
+          // Bow drawing sound
+          if (localPlayer.isDrawingBow && !bowSoundPlayedRef.current) {
+            playBowDrawSound()
+            bowSoundPlayedRef.current = true
+          }
+
+          // Full draw sound (when bow is fully drawn)
+          if (localPlayer.isDrawingBow && localPlayer.drawStartTime) {
+            const currentTime = Date.now() / 1000
+            const drawTime = currentTime - localPlayer.drawStartTime
+
+            if (drawTime >= localPlayer.maxDrawTime && !fullDrawSoundPlayedRef.current) {
+              playBowFullDrawSound()
+              fullDrawSoundPlayedRef.current = true
+            }
+          }
+
+          // Bow release sound
+          if (!localPlayer.isDrawingBow && gameStateRef.current.players[playerId]?.isDrawingBow) {
+            playBowReleaseSound()
+            bowSoundPlayedRef.current = false
+            fullDrawSoundPlayedRef.current = false
+          }
+
+          // Special attack sound
+          if (localPlayer.isChargingSpecial && !specialSoundPlayedRef.current) {
+            specialSoundPlayedRef.current = true
+          }
+
+          // Special attack release sound
+          if (!localPlayer.isChargingSpecial && gameStateRef.current.players[playerId]?.isChargingSpecial) {
+            playSpecialAttackSound()
+            specialSoundPlayedRef.current = false
+          }
+        } catch (error) {
+          console.error("Error playing game sounds:", error)
+          // Continue game even if sound playback fails
+        }
+      }
+
       gameStateRef.current = newState
       setGameState(newState)
 
@@ -81,22 +152,27 @@ export default function GameController({ playerId, playerName, isHost, onGameEnd
 
       switch (e.key.toLowerCase()) {
         case "w":
+        case "arrowup":
           player.controls.up = true
           break
         case "s":
+        case "arrowdown":
           player.controls.down = true
           break
         case "a":
+        case "arrowleft":
           player.controls.left = true
           break
         case "d":
+        case "arrowright":
           player.controls.right = true
-          break
-        case " ": // Space
-          player.controls.shoot = true
           break
         case "shift":
           player.controls.dash = true
+          break
+        // Toggle debug mode with F3
+        case "f3":
+          setShowDebug((prev) => !prev)
           break
       }
     }
@@ -108,19 +184,20 @@ export default function GameController({ playerId, playerName, isHost, onGameEnd
 
       switch (e.key.toLowerCase()) {
         case "w":
+        case "arrowup":
           player.controls.up = false
           break
         case "s":
+        case "arrowdown":
           player.controls.down = false
           break
         case "a":
+        case "arrowleft":
           player.controls.left = false
           break
         case "d":
+        case "arrowright":
           player.controls.right = false
-          break
-        case " ": // Space
-          player.controls.shoot = false
           break
         case "shift":
           player.controls.dash = false
@@ -149,11 +226,11 @@ export default function GameController({ playerId, playerName, isHost, onGameEnd
       if (!gameStateRef.current.players[playerId]) return
 
       if (e.button === 0) {
-        // Left click
+        // Left click - start drawing bow
         gameStateRef.current.players[playerId].controls.shoot = true
       } else if (e.button === 2) {
-        // Right click
-        gameStateRef.current.players[playerId].controls.dash = true
+        // Right click - start charging special attack
+        gameStateRef.current.players[playerId].controls.special = true
       }
     }
 
@@ -161,11 +238,11 @@ export default function GameController({ playerId, playerName, isHost, onGameEnd
       if (!gameStateRef.current.players[playerId]) return
 
       if (e.button === 0) {
-        // Left click
+        // Left click release - fire arrow
         gameStateRef.current.players[playerId].controls.shoot = false
       } else if (e.button === 2) {
-        // Right click
-        gameStateRef.current.players[playerId].controls.dash = false
+        // Right click release - fire special attack
+        gameStateRef.current.players[playerId].controls.special = false
       }
     }
 
@@ -207,7 +284,38 @@ export default function GameController({ playerId, playerName, isHost, onGameEnd
           ai.controls.down = Math.random() > 0.7 && !ai.controls.up
           ai.controls.left = Math.random() > 0.7
           ai.controls.right = Math.random() > 0.7 && !ai.controls.left
-          ai.controls.shoot = Math.random() > 0.8
+
+          // Randomly shoot arrows
+          if (Math.random() > 0.95 && !ai.isDrawingBow) {
+            ai.controls.shoot = true
+
+            // Release arrow after a random time
+            setTimeout(
+              () => {
+                if (gameStateRef.current.players[id]) {
+                  gameStateRef.current.players[id].controls.shoot = false
+                }
+              },
+              Math.random() * 1000 + 200,
+            )
+          }
+
+          // Randomly use special attack
+          if (Math.random() > 0.98 && !ai.isChargingSpecial && ai.specialAttackCooldown <= 0) {
+            ai.controls.special = true
+
+            // Release special after a random time
+            setTimeout(
+              () => {
+                if (gameStateRef.current.players[id]) {
+                  gameStateRef.current.players[id].controls.special = false
+                }
+              },
+              Math.random() * 500 + 500,
+            )
+          }
+
+          // Randomly dash
           ai.controls.dash = Math.random() > 0.95
 
           // Randomly change rotation
@@ -221,5 +329,13 @@ export default function GameController({ playerId, playerName, isHost, onGameEnd
     return () => clearInterval(aiUpdateInterval)
   }, [isHost])
 
-  return <GameRenderer gameState={gameState} localPlayerId={playerId} />
+  return (
+    <div className="relative">
+      <GameRenderer gameState={gameState} localPlayerId={playerId} />
+      <DebugOverlay gameState={gameState} localPlayerId={playerId} visible={showDebug} />
+      <div className="absolute bottom-2 left-2 text-xs text-white bg-black/50 p-1 rounded">
+        Press F3 to toggle debug overlay
+      </div>
+    </div>
+  )
 }

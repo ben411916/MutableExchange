@@ -13,6 +13,7 @@ import { Gamepad2, Users, Trophy, Clock } from "lucide-react"
 import Image from "next/image"
 import GameController from "./game-controller"
 import GameInstructions from "./game-instructions"
+import { loadAudioFiles } from "@/utils/audio-manager"
 
 interface MatchmakingLobbyProps {
   publicKey: string
@@ -137,6 +138,11 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
       return
     }
 
+    // Try to load audio files, but don't block game creation if it fails
+    loadAudioFiles().catch((err) => {
+      console.warn("Audio files could not be loaded, game will continue without sound:", err)
+    })
+
     const newLobby: GameLobby = {
       id: `lobby-${Date.now()}`,
       host: publicKey,
@@ -159,6 +165,11 @@ export default function MatchmakingLobby({ publicKey, balance, mutbBalance }: Ma
       alert("You don't have enough MUTB tokens for this wager")
       return
     }
+
+    // Try to load audio files, but don't block game joining if it fails
+    loadAudioFiles().catch((err) => {
+      console.warn("Audio files could not be loaded, game will continue without sound:", err)
+    })
 
     // In a real app, this would send a request to join the lobby
     setSelectedLobby(lobby)

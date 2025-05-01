@@ -377,12 +377,9 @@ export default function MultiWalletConnector() {
             </Badge>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <AudioToggleButton />
-          <SoundButton variant="ghost" size="icon" className="h-8 w-8" onClick={toggleCollapse}>
-            <ChevronDown className="h-4 w-4" />
-          </SoundButton>
-        </div>
+        <SoundButton variant="ghost" size="icon" className="h-8 w-8" onClick={toggleCollapse}>
+          <ChevronDown className="h-4 w-4" />
+        </SoundButton>
       </div>
     )
   }
@@ -408,7 +405,7 @@ export default function MultiWalletConnector() {
             <CardTitle className="font-mono">SOLANA WALLET</CardTitle>
           </div>
           <div className="flex items-center gap-2">
-            <AudioToggleButton />
+            {!isCollapsed && <AudioToggleButton />}
             {connected && !isCollapsed && (
               <SoundButton variant="ghost" size="icon" className="h-8 w-8" onClick={toggleCollapse}>
                 <ChevronUp className="h-4 w-4" />

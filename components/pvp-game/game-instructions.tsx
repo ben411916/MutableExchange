@@ -29,7 +29,7 @@ export default function GameInstructions() {
       <DialogContent className="sm:max-w-md border-2 border-black bg-[#fbf3de]">
         <DialogHeader>
           <DialogTitle className="font-mono">GAME INSTRUCTIONS</DialogTitle>
-          <DialogDescription>How to play the top-down shooter game</DialogDescription>
+          <DialogDescription>How to play the bow and arrow game</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
@@ -37,9 +37,30 @@ export default function GameInstructions() {
             <ul className="list-disc pl-5 space-y-1 text-sm">
               <li>Move with WASD or arrow keys</li>
               <li>Aim with mouse</li>
-              <li>Left-click to shoot</li>
-              <li>Right-click to use special ability</li>
-              <li>Space to dash</li>
+              <li>Hold Left-click to draw bow, release to fire</li>
+              <li>The longer you draw, the more damage your arrow does</li>
+              <li>Hold Right-click to charge special attack (fires three arrows)</li>
+              <li>Press Shift to dash</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="font-bold mb-1">Bow Mechanics</h3>
+            <ul className="list-disc pl-5 space-y-1 text-sm">
+              <li>
+                <span className="font-medium">Quick Shot:</span> Tap left-click for a fast but weak arrow (5 damage)
+              </li>
+              <li>
+                <span className="font-medium">Full Draw:</span> Hold left-click for 1.5 seconds for maximum damage (25
+                damage)
+              </li>
+              <li>
+                <span className="font-medium">Special Attack:</span> Hold right-click to charge, releases 3 arrows in a
+                spread pattern
+              </li>
+              <li>
+                <span className="font-medium">Special Cooldown:</span> 5 seconds between special attacks
+              </li>
             </ul>
           </div>
 
@@ -69,7 +90,7 @@ export default function GameInstructions() {
                 <span className="font-medium">Speed Boost:</span> Move faster for a short time
               </li>
               <li>
-                <span className="font-medium">Rapid Fire:</span> Shoot faster for a short time
+                <span className="font-medium">Quiver Upgrade:</span> Faster bow drawing for a short time
               </li>
               <li>
                 <span className="font-medium">Health Pack:</span> Restore health
