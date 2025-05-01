@@ -9,18 +9,6 @@ import MatchmakingLobby from "./pvp-game/matchmaking-lobby"
 import GameSelection from "./pvp-game/game-selection"
 import type { Connection } from "@solana/web3.js"
 import { Button } from "@/components/ui/button"
-import dynamic from "next/dynamic"
-
-// Dynamically import the TurnBasedMatchmaking component only when needed
-const TurnBasedMatchmaking = dynamic(() => import("./turn-based-game/matchmaking-lobby"), {
-  ssr: false,
-  loading: () => (
-    <div className="p-8 text-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-4"></div>
-      <p>Loading game...</p>
-    </div>
-  ),
-})
 
 interface MutablePlatformProps {
   publicKey: string
@@ -144,27 +132,6 @@ export default function MutablePlatform({ publicKey, balance, provider, connecti
                 </div>
               </div>
               <MatchmakingLobby publicKey={publicKey} balance={balance} mutbBalance={mutbBalance} />
-            </div>
-          ) : selectedGame === "turn-based-strategy" ? (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <Button
-                  onClick={() => setSelectedGame(null)}
-                  variant="outline"
-                  className="border-2 border-black text-black hover:bg-[#FFD54F] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
-                >
-                  Back to Games
-                </Button>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold font-mono">TURN-BASED STRATEGY</span>
-                </div>
-              </div>
-              <TurnBasedMatchmaking
-                publicKey={publicKey}
-                playerName={publicKey.substring(0, 6)}
-                mutbBalance={mutbBalance}
-                onExit={() => setSelectedGame(null)}
-              />
             </div>
           ) : (
             <Card className="bg-[#fbf3de] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
