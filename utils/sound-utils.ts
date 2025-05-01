@@ -3,6 +3,7 @@
 // Preload audio files
 const audioCache: Record<string, HTMLAudioElement> = {}
 let audioInitialized = false
+let audioInitializationAttempted = false
 
 // Available sounds
 export const SOUNDS = {
@@ -26,12 +27,27 @@ const checkAudioFile = async (path: string): Promise<boolean> => {
 
 // Initialize audio (should be called after user interaction)
 export const initializeAudio = async () => {
-  if (audioInitialized) return
+  if (audioInitialized || audioInitializationAttempted) return
+
+  audioInitializationAttempted = true
 
   try {
+    // Check if Web Audio API is supported
+    if (typeof window === "undefined" || typeof Audio === "undefined") {
+      console.warn("Audio is not supported in this environment")
+      return
+    }
+
     // Check if audio files exist before preloading
     for (const [key, soundPath] of Object.entries(SOUNDS)) {
       try {
+        // Check if file exists
+        const fileExists = await checkAudioFile(soundPath)
+        if (!fileExists) {
+          console.warn(`Audio file not found: ${soundPath}`)
+          continue
+        }
+
         const audio = new Audio()
 
         // Add event listeners for debugging
@@ -45,11 +61,27 @@ export const initializeAudio = async () => {
 
         // Test loading the audio
         const canPlay = await new Promise<boolean>((resolve) => {
-          audio.addEventListener("canplaythrough", () => resolve(true), { once: true })
-          audio.addEventListener("error", () => resolve(false), { once: true })
+          const successHandler = () => {
+            audio.removeEventListener("canplaythrough", successHandler)
+            audio.removeEventListener("error", errorHandler)
+            resolve(true)
+          }
+
+          const errorHandler = () => {
+            audio.removeEventListener("canplaythrough", successHandler)
+            audio.removeEventListener("error", errorHandler)
+            resolve(false)
+          }
+
+          audio.addEventListener("canplaythrough", successHandler, { once: true })
+          audio.addEventListener("error", errorHandler, { once: true })
 
           // Set a timeout in case the events don't fire
-          setTimeout(() => resolve(false), 3000)
+          setTimeout(() => {
+            audio.removeEventListener("canplaythrough", successHandler)
+            audio.removeEventListener("error", errorHandler)
+            resolve(false)
+          }, 3000)
         })
 
         if (canPlay) {
@@ -63,7 +95,11 @@ export const initializeAudio = async () => {
       }
     }
 
-    audioInitialized = true
+    audioInitialized = Object.keys(audioCache).length > 0
+
+    if (!audioInitialized) {
+      console.warn("No audio files could be loaded successfully")
+    }
   } catch (error) {
     console.error("Failed to initialize audio:", error)
   }
@@ -71,9 +107,9 @@ export const initializeAudio = async () => {
 
 // Play a specific sound
 export const playSound = (soundPath: string, volume = 1.0) => {
-  if (!audioInitialized) {
-    initializeAudio()
-    return // Don't try to play until initialized
+  // If audio isn't initialized or the browser doesn't support audio, silently fail
+  if (!audioInitialized || typeof window === "undefined" || typeof Audio === "undefined") {
+    return
   }
 
   try {
@@ -88,9 +124,13 @@ export const playSound = (soundPath: string, volume = 1.0) => {
     sound.volume = volume
 
     // Play with better error handling
-    sound.play().catch((err) => {
-      console.warn("Could not play sound:", err)
-    })
+    const playPromise = sound.play()
+
+    if (playPromise !== undefined) {
+      playPromise.catch((err) => {
+        console.warn("Could not play sound:", err)
+      })
+    }
   } catch (error) {
     console.error("Error playing sound:", error)
   }
@@ -115,4 +155,9 @@ export const playRandomCoinSound = () => {
 
   const randomIndex = Math.floor(Math.random() * availableSounds.length)
   playSound(availableSounds[randomIndex], 0.5)
+}
+
+// Check if audio is supported and initialized
+export const isAudioSupported = () => {
+  return audioInitialized && typeof window !== "undefined" && typeof Audio !== "undefined"
 }

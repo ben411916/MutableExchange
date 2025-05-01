@@ -4,7 +4,7 @@ import type React from "react"
 
 import { type ReactNode, useEffect, useState } from "react"
 import { Button, type ButtonProps } from "@/components/ui/button"
-import { playRandomCoinSound, initializeAudio } from "@/utils/sound-utils"
+import { playRandomCoinSound, initializeAudio, isAudioSupported } from "@/utils/sound-utils"
 
 interface SoundButtonProps extends ButtonProps {
   children: ReactNode
@@ -24,20 +24,35 @@ export default function SoundButton({ children, noSound = false, onClick, ...pro
         } catch (error) {
           console.error("Failed to initialize audio:", error)
         }
-        document.removeEventListener("click", handleFirstInteraction)
       }
 
-      document.addEventListener("click", handleFirstInteraction)
+      // Try to initialize on mount
+      handleFirstInteraction()
+
+      // Also set up event listener for user interaction
+      const handleUserInteraction = () => {
+        handleFirstInteraction()
+        // Remove event listeners after first interaction
+        document.removeEventListener("click", handleUserInteraction)
+        document.removeEventListener("touchstart", handleUserInteraction)
+        document.removeEventListener("keydown", handleUserInteraction)
+      }
+
+      document.addEventListener("click", handleUserInteraction)
+      document.addEventListener("touchstart", handleUserInteraction)
+      document.addEventListener("keydown", handleUserInteraction)
 
       return () => {
-        document.removeEventListener("click", handleFirstInteraction)
+        document.removeEventListener("click", handleUserInteraction)
+        document.removeEventListener("touchstart", handleUserInteraction)
+        document.removeEventListener("keydown", handleUserInteraction)
       }
     }
   }, [audioInitialized])
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     // Play sound if not disabled
-    if (!props.disabled && !noSound && audioInitialized) {
+    if (!props.disabled && !noSound && isAudioSupported()) {
       playRandomCoinSound()
     }
 

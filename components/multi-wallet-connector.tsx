@@ -116,15 +116,27 @@ export default function MultiWalletConnector() {
 
   // Initialize audio on component mount
   useEffect(() => {
-    const handleFirstInteraction = () => {
-      initializeAudio()
-      document.removeEventListener("click", handleFirstInteraction)
+    const handleUserInteraction = () => {
+      initializeAudio().catch((err) => console.warn("Audio initialization failed:", err))
+
+      // Remove event listeners after first interaction
+      document.removeEventListener("click", handleUserInteraction)
+      document.removeEventListener("touchstart", handleUserInteraction)
+      document.removeEventListener("keydown", handleUserInteraction)
     }
 
-    document.addEventListener("click", handleFirstInteraction)
+    // Try to initialize immediately
+    initializeAudio().catch((err) => console.warn("Initial audio initialization failed:", err))
+
+    // Also set up event listeners for user interaction
+    document.addEventListener("click", handleUserInteraction)
+    document.addEventListener("touchstart", handleUserInteraction)
+    document.addEventListener("keydown", handleUserInteraction)
 
     return () => {
-      document.removeEventListener("click", handleFirstInteraction)
+      document.removeEventListener("click", handleUserInteraction)
+      document.removeEventListener("touchstart", handleUserInteraction)
+      document.removeEventListener("keydown", handleUserInteraction)
     }
   }, [])
 
@@ -229,7 +241,7 @@ export default function MultiWalletConnector() {
   // Connect to wallet
   const connectWallet = async (walletType: WalletType) => {
     // Initialize audio first (this requires user interaction)
-    initializeAudio().catch((err) => console.warn("Audio initialization failed:", err))
+    await initializeAudio().catch((err) => console.warn("Audio initialization failed:", err))
 
     // Handle test mode
     if (walletType === "test") {
@@ -242,7 +254,13 @@ export default function MultiWalletConnector() {
       setBalance(5.0) // Set mock balance
 
       // Play intro sound with a slight delay to ensure audio is initialized
-      setTimeout(() => playIntroSound(), 100)
+      setTimeout(() => {
+        try {
+          playIntroSound()
+        } catch (error) {
+          console.warn("Failed to play intro sound:", error)
+        }
+      }, 300)
       return
     }
 
