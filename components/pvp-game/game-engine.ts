@@ -17,6 +17,8 @@ export interface GameObject {
   damage?: number // Added damage property for arrows
 }
 
+export type PlayerAnimationState = "idle" | "run" | "fire" | "hit" | "death"
+
 export interface Player extends GameObject {
   name: string
   score: number
@@ -36,7 +38,7 @@ export interface Player extends GameObject {
   specialAttackCooldown: number
   specialAttackReady: boolean
   // Animation state
-  animationState: "idle" | "run" | "fire" | "hit" | "death"
+  animationState: PlayerAnimationState
   lastAnimationChange: number
   // Controls
   controls: {
@@ -62,6 +64,9 @@ export interface GameState {
   isGameOver: boolean
   winner: string | null
 }
+
+// Available colors for players
+export const playerColors = ["red", "blue", "green", "yellow", "purple", "brown", "black"]
 
 // Update the createInitialGameState function to include maxGameTime
 export const createInitialGameState = (): GameState => {

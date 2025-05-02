@@ -5,11 +5,19 @@ import { createInitialGameState, createPlayer, type GameState, updateGameState }
 import GameRenderer from "./game-renderer"
 import DebugOverlay from "./debug-overlay"
 import {
+  initializeAudio,
   playBowDrawSound,
   playBowReleaseSound,
   playBowFullDrawSound,
   playSpecialAttackSound,
-  loadAudioFiles,
+  playHitSound,
+  playDeathSound,
+  playDashSound,
+  playGameOverSound,
+  playVictorySound,
+  startBackgroundMusic,
+  stopBackgroundMusic,
+  audioManager,
 } from "@/utils/audio-manager"
 
 interface GameControllerProps {
@@ -27,21 +35,16 @@ export default function GameController({ playerId, playerName, isHost, onGameEnd
   const bowSoundPlayedRef = useRef<boolean>(false)
   const fullDrawSoundPlayedRef = useRef<boolean>(false)
   const specialSoundPlayedRef = useRef<boolean>(false)
-  const audioLoadedRef = useRef<boolean>(false)
+  const audioInitializedRef = useRef<boolean>(false)
   const [showDebug, setShowDebug] = useState<boolean>(false)
 
   // Initialize game
   useEffect(() => {
-    // Load audio files - but don't wait for them to complete
-    loadAudioFiles()
-      .then(() => {
-        audioLoadedRef.current = true
-        console.log("Audio files loaded successfully")
-      })
-      .catch((err) => {
-        console.error("Error loading audio files, continuing without sound:", err)
-        // Game will continue without sound
-      })
+    // Initialize audio system
+    initializeAudio().then(() => {
+      audioInitializedRef.current = true
+      console.log("Audio system initialized")
+    })
 
     // Create local player
     const playerColors = ["#FF5252", "#4CAF50", "#2196F3", "#FFC107"]
@@ -86,8 +89,8 @@ export default function GameController({ playerId, playerName, isHost, onGameEnd
 
       // Check for sound effects for the local player
       const localPlayer = newState.players[playerId]
-      if (localPlayer && audioLoadedRef.current) {
-        // Only try to play sounds if audio is loaded
+      if (localPlayer && audioInitializedRef.current && !audioManager.isSoundMuted()) {
+        // Only try to play sounds if audio is initialized and not muted
         try {
           // Bow drawing sound
           if (localPlayer.isDrawingBow && !bowSoundPlayedRef.current) {
@@ -123,6 +126,27 @@ export default function GameController({ playerId, playerName, isHost, onGameEnd
             playSpecialAttackSound()
             specialSoundPlayedRef.current = false
           }
+
+          // Dash sound
+          if (localPlayer.isDashing && !gameStateRef.current.players[playerId]?.isDashing) {
+            playDashSound()
+          }
+
+          // Hit sound
+          if (
+            localPlayer.animationState === "hit" &&
+            gameStateRef.current.players[playerId]?.animationState !== "hit"
+          ) {
+            playHitSound()
+          }
+
+          // Death sound
+          if (
+            localPlayer.animationState === "death" &&
+            gameStateRef.current.players[playerId]?.animationState !== "death"
+          ) {
+            playDeathSound()
+          }
         } catch (error) {
           console.error("Error playing game sounds:", error)
           // Continue game even if sound playback fails
@@ -134,6 +158,18 @@ export default function GameController({ playerId, playerName, isHost, onGameEnd
 
       // Check for game over
       if (newState.isGameOver && onGameEnd) {
+        // Play appropriate game over sound
+        if (!audioManager.isSoundMuted()) {
+          if (newState.winner === playerId) {
+            playVictorySound()
+          } else {
+            playGameOverSound()
+          }
+        }
+
+        // Stop background music
+        stopBackgroundMusic()
+
         onGameEnd(newState.winner)
       } else {
         // Continue game loop
@@ -143,6 +179,11 @@ export default function GameController({ playerId, playerName, isHost, onGameEnd
 
     // Start game loop
     requestAnimationFrameIdRef.current = requestAnimationFrame(gameLoop)
+
+    // Start background music if not muted
+    if (!audioManager.isSoundMuted()) {
+      startBackgroundMusic()
+    }
 
     // Set up keyboard controls
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -173,6 +214,10 @@ export default function GameController({ playerId, playerName, isHost, onGameEnd
         // Toggle debug mode with F3
         case "f3":
           setShowDebug((prev) => !prev)
+          break
+        // Toggle mute with M
+        case "m":
+          audioManager.toggleMute()
           break
       }
     }
@@ -258,6 +303,14 @@ export default function GameController({ playerId, playerName, isHost, onGameEnd
     document.addEventListener("mouseup", handleMouseUp)
     document.addEventListener("contextmenu", handleContextMenu)
 
+    // Resume audio context on user interaction
+    const resumeAudio = () => {
+      if (!audioManager.isSoundMuted()) {
+        audioManager.resumeAudioContext()
+      }
+    }
+    document.addEventListener("click", resumeAudio)
+
     // Clean up
     return () => {
       cancelAnimationFrame(requestAnimationFrameIdRef.current)
@@ -267,6 +320,10 @@ export default function GameController({ playerId, playerName, isHost, onGameEnd
       document.removeEventListener("mousedown", handleMouseDown)
       document.removeEventListener("mouseup", handleMouseUp)
       document.removeEventListener("contextmenu", handleContextMenu)
+      document.removeEventListener("click", resumeAudio)
+
+      // Stop background music
+      stopBackgroundMusic()
     }
   }, [playerId, playerName, isHost, onGameEnd])
 
@@ -333,8 +390,10 @@ export default function GameController({ playerId, playerName, isHost, onGameEnd
     <div className="relative">
       <GameRenderer gameState={gameState} localPlayerId={playerId} />
       <DebugOverlay gameState={gameState} localPlayerId={playerId} visible={showDebug} />
-      <div className="absolute bottom-2 left-2 text-xs text-white bg-black/50 p-1 rounded">
-        Press F3 to toggle debug overlay
+
+      {/* Small hint text */}
+      <div className="absolute bottom-2 right-2 text-xs text-white/70 bg-black/20 backdrop-blur-sm px-2 py-1 rounded">
+        Press M to toggle sound | F3 for debug
       </div>
     </div>
   )

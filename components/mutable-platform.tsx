@@ -1,14 +1,17 @@
 "use client"
 
 import { useState } from "react"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { Wallet, Gamepad2, ArrowLeftRight } from "lucide-react"
 import Image from "next/image"
-import { Card, CardContent } from "@/components/ui/card"
-import { Gamepad2, Coins, Crosshair } from "lucide-react"
 import MutableMarketplace from "./mutable-marketplace"
-import MatchmakingLobby from "./pvp-game/matchmaking-lobby"
 import GameSelection from "./pvp-game/game-selection"
+import MatchmakingLobby from "./pvp-game/matchmaking-lobby"
 import type { Connection } from "@solana/web3.js"
-import { Button } from "@/components/ui/button"
+import SoundButton from "./sound-button"
+import { withClickSound } from "@/utils/sound-utils"
 
 interface MutablePlatformProps {
   publicKey: string
@@ -18,140 +21,189 @@ interface MutablePlatformProps {
 }
 
 export default function MutablePlatform({ publicKey, balance, provider, connection }: MutablePlatformProps) {
-  const [selectedPlatform, setSelectedPlatform] = useState<"none" | "exchange" | "pvp">("none")
+  const [activeTab, setActiveTab] = useState("games")
   const [selectedGame, setSelectedGame] = useState<string | null>(null)
-  const [mutbBalance, setMutbBalance] = useState<number>(25) // Mock MUTB balance for demo
+  const [mutbBalance, setMutbBalance] = useState<number>(100) // Mock MUTB balance
+
+  const handleSelectGame = (gameId: string) => {
+    setSelectedGame(gameId)
+  }
+
+  const handleBackToSelection = () => {
+    setSelectedGame(null)
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Platform Selection */}
-      {selectedPlatform === "none" && (
-        <div className="space-y-6">
-          <div className="flex justify-center mb-6">
-            <Image
-              src="/images/mutable-logo-transparent.png"
-              alt="Mutable Logo"
-              width={200}
-              height={200}
-              className="mb-2"
-            />
-          </div>
-
-          <Card className="bg-[#fbf3de] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <CardContent className="p-6">
-              <h2 className="text-2xl font-bold text-center mb-6 font-mono">SELECT PLATFORM</h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button
-                  onClick={() => setSelectedPlatform("exchange")}
-                  className="h-auto py-6 px-4 bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
-                >
-                  <div className="flex flex-col items-center gap-3">
-                    <Coins size={32} />
-                    <span className="text-xl font-bold font-mono">MUTABLE EXCHANGE</span>
-                    <span className="text-sm">Trade gaming currencies</span>
-                  </div>
-                </Button>
-
-                <Button
-                  onClick={() => setSelectedPlatform("pvp")}
-                  className="h-auto py-6 px-4 bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
-                >
-                  <div className="flex flex-col items-center gap-3">
-                    <Gamepad2 size={32} />
-                    <span className="text-xl font-bold font-mono">MUTABLE PVP</span>
-                    <span className="text-sm">Player vs Player gaming</span>
-                  </div>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Exchange Platform */}
-      {selectedPlatform === "exchange" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Button
-              onClick={() => setSelectedPlatform("none")}
-              variant="outline"
-              className="border-2 border-black text-black hover:bg-[#FFD54F] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
-            >
-              Back to Selection
-            </Button>
+    <div className="space-y-4">
+      <Tabs defaultValue="games" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-4 border-2 border-black bg-[#FFD54F]">
+          <TabsTrigger
+            value="exchange"
+            className="data-[state=active]:bg-white data-[state=active]:text-black font-mono"
+            onClick={withClickSound()}
+          >
             <div className="flex items-center gap-2">
-              <Image src="/images/mutable-token.png" alt="MUTB Token" width={32} height={32} />
-              <span className="font-bold font-mono">MUTABLE EXCHANGE</span>
+              <ArrowLeftRight className="h-4 w-4" />
+              <span>EXCHANGE</span>
             </div>
-          </div>
+          </TabsTrigger>
+          <TabsTrigger
+            value="games"
+            className="data-[state=active]:bg-white data-[state=active]:text-black font-mono"
+            onClick={withClickSound()}
+          >
+            <div className="flex items-center gap-2">
+              <Gamepad2 className="h-4 w-4" />
+              <span>GAMES</span>
+            </div>
+          </TabsTrigger>
+          <TabsTrigger
+            value="wallet"
+            className="data-[state=active]:bg-white data-[state=active]:text-black font-mono"
+            onClick={withClickSound()}
+          >
+            <div className="flex items-center gap-2">
+              <Wallet className="h-4 w-4" />
+              <span>WALLET</span>
+            </div>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="exchange">
           <MutableMarketplace publicKey={publicKey} balance={balance} provider={provider} connection={connection} />
-        </div>
-      )}
+        </TabsContent>
 
-      {/* PvP Platform */}
-      {selectedPlatform === "pvp" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Button
-              onClick={() => {
-                setSelectedPlatform("none")
-                setSelectedGame(null)
-              }}
-              variant="outline"
-              className="border-2 border-black text-black hover:bg-[#FFD54F] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
-            >
-              Back to Selection
-            </Button>
-            <div className="flex items-center gap-2">
-              <Image src="/images/mutable-token.png" alt="MUTB Token" width={32} height={32} />
-              <span className="font-bold font-mono">MUTABLE PVP</span>
-            </div>
-          </div>
-
-          {!selectedGame ? (
-            <GameSelection
-              publicKey={publicKey}
-              balance={balance}
-              mutbBalance={mutbBalance}
-              onSelectGame={(gameId) => setSelectedGame(gameId)}
-            />
-          ) : selectedGame === "top-down-shooter" ? (
+        <TabsContent value="games">
+          {selectedGame ? (
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <Button
-                  onClick={() => setSelectedGame(null)}
+              <div className="flex items-center">
+                <SoundButton
                   variant="outline"
                   className="border-2 border-black text-black hover:bg-[#FFD54F] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
+                  onClick={handleBackToSelection}
                 >
-                  Back to Games
-                </Button>
-                <div className="flex items-center gap-2">
-                  <Crosshair className="h-5 w-5" />
-                  <span className="font-bold font-mono">TOP-DOWN SHOOTER</span>
-                </div>
+                  Back to Game Selection
+                </SoundButton>
+                <Badge
+                  variant="outline"
+                  className="ml-auto bg-[#FFD54F] text-black border-2 border-black flex items-center gap-1 font-mono"
+                >
+                  <Image src="/images/mutable-token.png" alt="MUTB" width={16} height={16} className="rounded-full" />
+                  {mutbBalance.toFixed(2)} MUTB
+                </Badge>
               </div>
               <MatchmakingLobby publicKey={publicKey} balance={balance} mutbBalance={mutbBalance} />
             </div>
           ) : (
-            <Card className="bg-[#fbf3de] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <CardContent className="p-12 flex flex-col items-center justify-center">
-                <Gamepad2 size={64} className="mb-4 text-gray-700" />
-                <h2 className="text-3xl font-bold font-mono text-center mb-2">COMING SOON</h2>
-                <p className="text-center text-gray-700 max-w-md">
-                  This game is currently in development and will be available soon!
-                </p>
-                <Button
-                  onClick={() => setSelectedGame(null)}
-                  className="mt-8 bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
-                >
-                  BACK TO GAMES
-                </Button>
-              </CardContent>
-            </Card>
+            <GameSelection
+              publicKey={publicKey}
+              balance={balance}
+              mutbBalance={mutbBalance}
+              onSelectGame={handleSelectGame}
+            />
           )}
-        </div>
-      )}
+        </TabsContent>
+
+        <TabsContent value="wallet">
+          <Card className="bg-[#fbf3de] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Wallet className="h-5 w-5" />
+                  <CardTitle className="font-mono">WALLET</CardTitle>
+                </div>
+                <Badge
+                  variant="outline"
+                  className="bg-[#FFD54F] text-black border-2 border-black flex items-center gap-1 font-mono"
+                >
+                  <Image src="/images/mutable-token.png" alt="MUTB" width={16} height={16} className="rounded-full" />
+                  {mutbBalance.toFixed(2)} MUTB
+                </Badge>
+              </div>
+              <CardDescription>Manage your wallet and tokens</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="p-4 border-2 border-black rounded-md bg-[#f5efdc]">
+                  <div className="font-bold mb-2 font-mono">CONNECTED WALLET</div>
+                  <div className="text-sm font-mono truncate">{publicKey}</div>
+                  <div className="mt-2 text-sm">
+                    <span className="font-medium">SOL Balance:</span> {balance !== null ? balance : "Loading..."}
+                  </div>
+                </div>
+
+                <div className="p-4 border-2 border-black rounded-md bg-[#f5efdc]">
+                  <div className="font-bold mb-2 font-mono">MUTABLE TOKENS</div>
+                  <div className="flex items-center gap-2">
+                    <Image src="/images/mutable-token.png" alt="MUTB" width={24} height={24} className="rounded-full" />
+                    <div>
+                      <div className="font-medium font-mono">MUTB</div>
+                      <div className="text-sm text-muted-foreground">Mutable Protocol Token</div>
+                    </div>
+                    <div className="ml-auto font-mono">{mutbBalance.toFixed(2)}</div>
+                  </div>
+                </div>
+
+                <div className="p-4 border-2 border-black rounded-md bg-[#f5efdc]">
+                  <div className="font-bold mb-2 font-mono">GAME TOKENS</div>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Image
+                        src="/images/mutable-logo-transparent.png"
+                        alt="GOLD"
+                        width={24}
+                        height={24}
+                        className="rounded-full"
+                      />
+                      <div>
+                        <div className="font-medium font-mono">GOLD</div>
+                        <div className="text-sm text-muted-foreground">Fantasy RPG</div>
+                      </div>
+                      <div className="ml-auto font-mono">1,250</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Image
+                        src="/images/mutable-logo-transparent.png"
+                        alt="GEMS"
+                        width={24}
+                        height={24}
+                        className="rounded-full"
+                      />
+                      <div>
+                        <div className="font-medium font-mono">GEMS</div>
+                        <div className="text-sm text-muted-foreground">Space Explorer</div>
+                      </div>
+                      <div className="ml-auto font-mono">350</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Image
+                        src="/images/mutable-logo-transparent.png"
+                        alt="COINS"
+                        width={24}
+                        height={24}
+                        className="rounded-full"
+                      />
+                      <div>
+                        <div className="font-medium font-mono">COINS</div>
+                        <div className="text-sm text-muted-foreground">Crypto Racer</div>
+                      </div>
+                      <div className="ml-auto font-mono">500</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <SoundButton
+                className="w-full bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
+                onClick={() => setActiveTab("exchange")}
+              >
+                GO TO EXCHANGE
+              </SoundButton>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

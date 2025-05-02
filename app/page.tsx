@@ -1,6 +1,7 @@
 import MultiWalletConnector from "@/components/multi-wallet-connector"
 import DemoWatermark from "@/components/demo-watermark"
 import PromoWatermark from "@/components/promo-watermark"
+import GlobalAudioControls from "@/components/global-audio-controls"
 
 export default function Home() {
   return (
@@ -9,6 +10,7 @@ export default function Home() {
         <MultiWalletConnector />
         <DemoWatermark />
         <PromoWatermark />
+        <GlobalAudioControls />
       </div>
     </main>
   )

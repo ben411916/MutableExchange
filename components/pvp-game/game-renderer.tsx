@@ -180,126 +180,143 @@ export default function GameRenderer({ gameState, localPlayerId }: GameRendererP
     const player = gameState.players[localPlayerId]
     if (!player) return
 
-    // Draw UI panel background
-    ctx.fillStyle = "rgba(0, 0, 0, 0.7)"
-    ctx.fillRect(10, 10, 200, 220)
-    ctx.strokeStyle = "#FFFFFF"
-    ctx.lineWidth = 2
-    ctx.strokeRect(10, 10, 200, 220)
+    // Draw minimalist UI elements with translucent backgrounds
 
-    // Draw score and stats with pixel font
+    // Player stats panel (top-left)
+    const statsWidth = 160
+    const statsHeight = 80
+    const statsX = 10
+    const statsY = 10
+
+    // Draw semi-transparent background with blur effect
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)"
+    ctx.beginPath()
+    ctx.roundRect(statsX, statsY, statsWidth, statsHeight, 8)
+    ctx.fill()
+
+    // Draw player stats
     ctx.fillStyle = "#ffffff"
-    ctx.font = "16px Arial"
+    ctx.font = "14px Arial"
     ctx.textAlign = "left"
-    ctx.fillText(`HEALTH: ${player.health}`, 20, 30)
-    ctx.fillText(`SCORE: ${player.score}`, 20, 60)
-    ctx.fillText(`KILLS: ${player.kills}`, 20, 90)
-    ctx.fillText(`DEATHS: ${player.deaths}`, 20, 120)
+    ctx.fillText(`HP: ${player.health}`, statsX + 10, statsY + 25)
+    ctx.fillText(`Score: ${player.score}`, statsX + 10, statsY + 45)
+    ctx.fillText(`Kills: ${player.kills}`, statsX + 10, statsY + 65)
 
-    // Draw bow draw indicator - pixelated style
+    // Draw ability indicators (bottom-left)
+    const abilitiesWidth = 220
+    const abilitiesHeight = 60
+    const abilitiesX = 10
+    const abilitiesY = gameState.arenaSize.height - abilitiesHeight - 10
+
+    // Draw semi-transparent background with blur effect
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)"
+    ctx.beginPath()
+    ctx.roundRect(abilitiesX, abilitiesY, abilitiesWidth, abilitiesHeight, 8)
+    ctx.fill()
+
+    // Draw dash cooldown indicator
+    const dashCooldownPercentage = Math.max(0, 1 - player.dashCooldown / 2)
+    drawCooldownIndicator(ctx, abilitiesX + 10, abilitiesY + 20, 100, 10, dashCooldownPercentage, "DASH")
+
+    // Draw special attack cooldown indicator
+    const specialCooldownPercentage = Math.max(0, 1 - player.specialAttackCooldown / 5)
+    drawCooldownIndicator(ctx, abilitiesX + 10, abilitiesY + 40, 100, 10, specialCooldownPercentage, "SPECIAL")
+
+    // Draw bow charge indicator when drawing bow
     if (player.isDrawingBow && player.drawStartTime !== null) {
       const currentTime = Date.now() / 1000
       const drawTime = currentTime - player.drawStartTime
       const drawPercentage = Math.min(drawTime / player.maxDrawTime, 1)
 
-      // Background
+      // Position in center-bottom of screen
+      const bowChargeWidth = 200
+      const bowChargeHeight = 10
+      const bowChargeX = (gameState.arenaSize.width - bowChargeWidth) / 2
+      const bowChargeY = gameState.arenaSize.height - 40
+
+      // Draw semi-transparent background
+      ctx.fillStyle = "rgba(0, 0, 0, 0.6)"
+      ctx.beginPath()
+      ctx.roundRect(bowChargeX - 10, bowChargeY - 5, bowChargeWidth + 20, bowChargeHeight + 10, 8)
+      ctx.fill()
+
+      // Draw charge bar background
       ctx.fillStyle = "#333333"
-      ctx.fillRect(20, 150, 100, 10)
+      ctx.fillRect(bowChargeX, bowChargeY, bowChargeWidth, bowChargeHeight)
 
-      // Fill with segments for pixelated look
-      ctx.fillStyle = drawPercentage < 0.3 ? "#ff9900" : drawPercentage < 0.7 ? "#ffff00" : "#00ff00"
-      const segmentWidth = 5
-      const segments = Math.floor((100 * drawPercentage) / segmentWidth)
-      for (let i = 0; i < segments; i++) {
-        ctx.fillRect(20 + i * segmentWidth, 150, segmentWidth - 1, 10)
-      }
+      // Draw charge bar fill
+      const chargeColor = drawPercentage < 0.3 ? "#ff9900" : drawPercentage < 0.7 ? "#ffff00" : "#00ff00"
+      ctx.fillStyle = chargeColor
+      ctx.fillRect(bowChargeX, bowChargeY, bowChargeWidth * drawPercentage, bowChargeHeight)
 
+      // Draw label
       ctx.fillStyle = "#ffffff"
-      ctx.fillText("BOW", 130, 160)
+      ctx.font = "12px Arial"
+      ctx.textAlign = "center"
+      ctx.fillText("BOW CHARGE", bowChargeX + bowChargeWidth / 2, bowChargeY - 5)
     }
 
-    // Draw dash cooldown indicator - pixelated style
-    const dashCooldownPercentage = Math.max(0, 1 - player.dashCooldown / 2)
-
-    // Background
-    ctx.fillStyle = "#333333"
-    ctx.fillRect(20, 170, 100, 10)
-
-    // Fill with segments
-    ctx.fillStyle = dashCooldownPercentage === 1 ? "#00ff00" : "#ff9900"
-    const dashSegmentWidth = 5
-    const dashSegments = Math.floor((100 * dashCooldownPercentage) / dashSegmentWidth)
-    for (let i = 0; i < dashSegments; i++) {
-      ctx.fillRect(20 + i * dashSegmentWidth, 170, dashSegmentWidth - 1, 10)
-    }
-
-    ctx.fillStyle = "#ffffff"
-    ctx.fillText("DASH", 130, 180)
-
-    // Draw special attack cooldown indicator - pixelated style
-    const specialCooldownPercentage = Math.max(0, 1 - player.specialAttackCooldown / 5)
-
-    // Background
-    ctx.fillStyle = "#333333"
-    ctx.fillRect(20, 190, 100, 10)
-
-    // Fill with segments
-    ctx.fillStyle = specialCooldownPercentage === 1 ? "#00ff00" : "#ff9900"
-    const specialSegmentWidth = 5
-    const specialSegments = Math.floor((100 * specialCooldownPercentage) / specialSegmentWidth)
-    for (let i = 0; i < specialSegments; i++) {
-      ctx.fillRect(20 + i * specialSegmentWidth, 190, specialSegmentWidth - 1, 10)
-    }
-
-    ctx.fillStyle = "#ffffff"
-    ctx.fillText("SPECIAL", 130, 200)
-
-    // Draw remaining time with pixel font
+    // Draw remaining time (top-center)
     const remainingTime = Math.max(0, gameState.maxGameTime - gameState.gameTime)
     const minutes = Math.floor(remainingTime / 60)
     const seconds = Math.floor(remainingTime % 60)
 
-    // Time background
-    ctx.fillStyle = "rgba(0, 0, 0, 0.7)"
-    ctx.fillRect(gameState.arenaSize.width / 2 - 70, 10, 140, 30)
-    ctx.strokeStyle = "#FFFFFF"
-    ctx.lineWidth = 2
-    ctx.strokeRect(gameState.arenaSize.width / 2 - 70, 10, 140, 30)
+    // Draw time background
+    const timeWidth = 100
+    const timeHeight = 30
+    const timeX = (gameState.arenaSize.width - timeWidth) / 2
+    const timeY = 10
 
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)"
+    ctx.beginPath()
+    ctx.roundRect(timeX, timeY, timeWidth, timeHeight, 8)
+    ctx.fill()
+
+    // Draw time text
     ctx.textAlign = "center"
     ctx.fillStyle = "#FFFFFF"
-    ctx.font = "20px Arial"
+    ctx.font = "18px Arial"
     ctx.fillText(
       `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`,
       gameState.arenaSize.width / 2,
-      30,
+      timeY + 20,
     )
 
-    // Draw scoreboard
-    drawScoreboard(ctx, gameState)
+    // Draw mini-scoreboard (top-right)
+    drawMiniScoreboard(ctx, gameState)
 
-    // Draw game over message with pixel font
+    // Draw game over message
     if (gameState.isGameOver) {
       // Semi-transparent overlay
-      ctx.fillStyle = "rgba(0, 0, 0, 0.7)"
+      ctx.fillStyle = "rgba(0, 0, 0, 0.5)"
       ctx.fillRect(0, 0, gameState.arenaSize.width, gameState.arenaSize.height)
 
       // Game over panel
-      ctx.fillStyle = "#333333"
-      ctx.fillRect(gameState.arenaSize.width / 2 - 150, gameState.arenaSize.height / 2 - 100, 300, 200)
-      ctx.strokeStyle = "#FFFFFF"
-      ctx.lineWidth = 3
-      ctx.strokeRect(gameState.arenaSize.width / 2 - 150, gameState.arenaSize.height / 2 - 100, 300, 200)
+      const gameOverWidth = 300
+      const gameOverHeight = 180
+      const gameOverX = (gameState.arenaSize.width - gameOverWidth) / 2
+      const gameOverY = (gameState.arenaSize.height - gameOverHeight) / 2
 
-      // Game over text with pixel font
+      ctx.fillStyle = "rgba(0, 0, 0, 0.7)"
+      ctx.beginPath()
+      ctx.roundRect(gameOverX, gameOverY, gameOverWidth, gameOverHeight, 16)
+      ctx.fill()
+
+      ctx.strokeStyle = "#FFFFFF"
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.roundRect(gameOverX, gameOverY, gameOverWidth, gameOverHeight, 16)
+      ctx.stroke()
+
+      // Game over text
       ctx.fillStyle = "#ffffff"
       ctx.font = "24px Arial"
       ctx.textAlign = "center"
-      ctx.fillText("GAME OVER", gameState.arenaSize.width / 2, gameState.arenaSize.height / 2 - 60)
+      ctx.fillText("GAME OVER", gameState.arenaSize.width / 2, gameOverY + 40)
 
       if (gameState.winner) {
         const winnerName = gameState.players[gameState.winner]?.name || "Unknown"
-        ctx.fillText(`${winnerName} WINS!`, gameState.arenaSize.width / 2, gameState.arenaSize.height / 2 - 20)
+        ctx.fillText(`${winnerName} WINS!`, gameState.arenaSize.width / 2, gameOverY + 80)
 
         // Add winner stats
         const winner = gameState.players[gameState.winner]
@@ -308,78 +325,81 @@ export default function GameRenderer({ gameState, localPlayerId }: GameRendererP
           ctx.fillText(
             `Kills: ${winner.kills} | Score: ${winner.score}`,
             gameState.arenaSize.width / 2,
-            gameState.arenaSize.height / 2 + 20,
+            gameOverY + 120,
           )
         }
       } else {
-        ctx.fillText("DRAW!", gameState.arenaSize.width / 2, gameState.arenaSize.height / 2)
+        ctx.fillText("DRAW!", gameState.arenaSize.width / 2, gameOverY + 80)
       }
     }
-
-    // Draw debug toggle button
-    ctx.fillStyle = debugMode ? "#FF5252" : "#4CAF50"
-    ctx.fillRect(gameState.arenaSize.width - 110, gameState.arenaSize.height - 40, 100, 30)
-    ctx.strokeStyle = "#FFFFFF"
-    ctx.lineWidth = 2
-    ctx.strokeRect(gameState.arenaSize.width - 110, gameState.arenaSize.height - 40, 100, 30)
-
-    ctx.fillStyle = "#FFFFFF"
-    ctx.font = "14px Arial"
-    ctx.textAlign = "center"
-    ctx.fillText(
-      debugMode ? "Debug: ON" : "Debug: OFF",
-      gameState.arenaSize.width - 60,
-      gameState.arenaSize.height - 20,
-    )
   }
 
-  // Draw scoreboard
-  const drawScoreboard = (ctx: CanvasRenderingContext2D, gameState: GameState) => {
+  // Helper function to draw cooldown indicators
+  const drawCooldownIndicator = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    percentage: number,
+    label: string,
+  ) => {
+    // Draw background
+    ctx.fillStyle = "#333333"
+    ctx.fillRect(x, y, width, height)
+
+    // Draw fill with color based on readiness
+    ctx.fillStyle = percentage === 1 ? "#00ff00" : "#ff9900"
+    ctx.fillRect(x, y, width * percentage, height)
+
+    // Draw label
+    ctx.fillStyle = "#ffffff"
+    ctx.font = "12px Arial"
+    ctx.textAlign = "left"
+    ctx.fillText(label, x + width + 10, y + height - 1)
+  }
+
+  // Draw mini-scoreboard
+  const drawMiniScoreboard = (ctx: CanvasRenderingContext2D, gameState: GameState) => {
     const players = Object.values(gameState.players)
     if (players.length === 0) return
 
     // Sort players by kills (descending)
     const sortedPlayers = [...players].sort((a, b) => b.kills - a.kills)
 
-    // Draw scoreboard background
-    const scoreboardWidth = 200
-    const scoreboardHeight = 30 + sortedPlayers.length * 25
+    // Draw mini-scoreboard in top-right corner
+    const scoreboardWidth = 160
+    const scoreboardHeight = 30 + sortedPlayers.length * 20
     const scoreboardX = gameState.arenaSize.width - scoreboardWidth - 10
     const scoreboardY = 10
 
-    ctx.fillStyle = "rgba(0, 0, 0, 0.7)"
-    ctx.fillRect(scoreboardX, scoreboardY, scoreboardWidth, scoreboardHeight)
-    ctx.strokeStyle = "#FFFFFF"
-    ctx.lineWidth = 2
-    ctx.strokeRect(scoreboardX, scoreboardY, scoreboardWidth, scoreboardHeight)
+    // Draw semi-transparent background
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)"
+    ctx.beginPath()
+    ctx.roundRect(scoreboardX, scoreboardY, scoreboardWidth, scoreboardHeight, 8)
+    ctx.fill()
 
     // Draw header
     ctx.fillStyle = "#FFFFFF"
-    ctx.font = "16px Arial"
+    ctx.font = "14px Arial"
     ctx.textAlign = "center"
     ctx.fillText("SCOREBOARD", scoreboardX + scoreboardWidth / 2, scoreboardY + 20)
 
     // Draw player scores
     ctx.textAlign = "left"
-    ctx.font = "14px Arial"
+    ctx.font = "12px Arial"
 
     sortedPlayers.forEach((player, index) => {
       const isLocalPlayer = player.id === localPlayerId
-      const y = scoreboardY + 45 + index * 25
-
-      // Highlight local player
-      if (isLocalPlayer) {
-        ctx.fillStyle = "rgba(255, 255, 255, 0.2)"
-        ctx.fillRect(scoreboardX + 5, y - 15, scoreboardWidth - 10, 20)
-      }
+      const y = scoreboardY + 40 + index * 20
 
       // Draw color indicator
       ctx.fillStyle = player.color
-      ctx.fillRect(scoreboardX + 10, y - 10, 10, 10)
+      ctx.fillRect(scoreboardX + 10, y - 8, 8, 8)
 
       // Draw player name
       ctx.fillStyle = isLocalPlayer ? "#FFFF00" : "#FFFFFF"
-      ctx.fillText(player.name, scoreboardX + 30, y)
+      ctx.fillText(player.name, scoreboardX + 25, y)
 
       // Draw kills
       ctx.textAlign = "right"
@@ -390,11 +410,11 @@ export default function GameRenderer({ gameState, localPlayerId }: GameRendererP
 
   // Draw debug information
   const drawDebugInfo = (ctx: CanvasRenderingContext2D, gameState: GameState) => {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.7)"
-    ctx.fillRect(10, gameState.arenaSize.height - 120, 300, 110)
-    ctx.strokeStyle = "#FFFFFF"
-    ctx.lineWidth = 1
-    ctx.strokeRect(10, gameState.arenaSize.height - 120, 300, 110)
+    // Draw semi-transparent background
+    ctx.fillStyle = "rgba(0, 0, 0, 0.5)"
+    ctx.beginPath()
+    ctx.roundRect(10, gameState.arenaSize.height - 100, 250, 90, 8)
+    ctx.fill()
 
     ctx.fillStyle = "#FFFFFF"
     ctx.font = "12px Arial"
@@ -403,21 +423,16 @@ export default function GameRenderer({ gameState, localPlayerId }: GameRendererP
     // Display frame count and FPS
     const now = Date.now()
     const fps = Math.round(1000 / (now - lastUpdateTimeRef.current))
-    ctx.fillText(`Frame: ${frameCountRef.current} | FPS: ${fps}`, 20, gameState.arenaSize.height - 100)
+    ctx.fillText(`Frame: ${frameCountRef.current} | FPS: ${fps}`, 20, gameState.arenaSize.height - 80)
 
     // Display particle count
-    ctx.fillText(`Particles: ${particles.length}`, 20, gameState.arenaSize.height - 80)
+    ctx.fillText(`Particles: ${particles.length}`, 20, gameState.arenaSize.height - 60)
 
     // Display local player info
     const player = gameState.players[localPlayerId]
     if (player) {
       ctx.fillText(
         `Position: (${Math.round(player.position.x)}, ${Math.round(player.position.y)})`,
-        20,
-        gameState.arenaSize.height - 60,
-      )
-      ctx.fillText(
-        `Velocity: (${Math.round(player.velocity.x)}, ${Math.round(player.velocity.y)})`,
         20,
         gameState.arenaSize.height - 40,
       )
@@ -503,8 +518,8 @@ export default function GameRenderer({ gameState, localPlayerId }: GameRendererP
         color,
         type,
         frame: 0,
-        // FIX: Ensure maxFrames is always less than what would cause negative radius
-        maxFrames: 25 + Math.floor(Math.random() * 5), // Reduced from 30 to 25 to prevent negative radius
+        // Ensure maxFrames is always less than what would cause negative radius
+        maxFrames: 25 + Math.floor(Math.random() * 5),
       })
     }
 
@@ -546,7 +561,7 @@ export default function GameRenderer({ gameState, localPlayerId }: GameRendererP
           frame: newFrame,
         }
       })
-      // FIX: Ensure particles are removed before they cause negative radius
+      // Ensure particles are removed before they cause negative radius
       .filter((particle) => particle.frame < particle.maxFrames && particle.frame < 29)
 
     particlesRef.current = updatedParticles
@@ -618,7 +633,7 @@ export default function GameRenderer({ gameState, localPlayerId }: GameRendererP
     // Draw particles
     particles.forEach((particle) => {
       try {
-        // FIX: Wrap particle generation in try/catch to prevent errors from crashing the game
+        // Wrap particle generation in try/catch to prevent errors from crashing the game
         generateParticle(ctx, particle.x, particle.y, particle.size, particle.color, particle.type, particle.frame)
       } catch (error) {
         console.error("Error generating particle:", error)
@@ -639,7 +654,7 @@ export default function GameRenderer({ gameState, localPlayerId }: GameRendererP
     if (debugMode) {
       drawDebugInfo(ctx, gameState)
     }
-  }, [gameState, localPlayerId, particles, debugMode]) // Removed function references from dependency array
+  }, [gameState, localPlayerId, particles, debugMode])
 
   // Handle click on debug button
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
