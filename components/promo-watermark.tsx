@@ -10,7 +10,7 @@ export default function PromoWatermark() {
 
   return (
     <Link
-      href="https://www.mutable.live/preregister"
+      href="https://www.mutable.live/pre-register-mutb-tokens"
       target="_blank"
       rel="noopener noreferrer"
       className={`fixed top-2 left-2 z-50 flex items-center gap-1 sm:gap-2 px-2 py-1 sm:px-3 sm:py-1.5 rounded-md transition-all duration-300 ${

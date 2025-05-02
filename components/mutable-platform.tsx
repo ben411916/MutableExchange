@@ -92,7 +92,30 @@ export default function MutablePlatform({ publicKey, balance, provider, connecti
                   {mutbBalance.toFixed(2)} MUTB
                 </Badge>
               </div>
-              <MatchmakingLobby publicKey={publicKey} balance={balance} mutbBalance={mutbBalance} />
+              {selectedGame === "top-down-shooter" ? (
+                <MatchmakingLobby
+                  publicKey={publicKey}
+                  playerName="Player"
+                  mutbBalance={mutbBalance}
+                  onExit={handleBackToSelection}
+                />
+              ) : (
+                <Card className="bg-[#fbf3de] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <CardContent className="p-12 flex flex-col items-center justify-center">
+                    <Gamepad2 size={64} className="mb-4 text-gray-700" />
+                    <h2 className="text-3xl font-bold font-mono text-center mb-2">COMING SOON</h2>
+                    <p className="text-center text-gray-700 max-w-md">
+                      This game is currently in development and will be available soon!
+                    </p>
+                    <SoundButton
+                      onClick={handleBackToSelection}
+                      className="mt-8 bg-[#FFD54F] hover:bg-[#FFCA28] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-mono"
+                    >
+                      BACK TO GAMES
+                    </SoundButton>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           ) : (
             <GameSelection

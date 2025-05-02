@@ -3,7 +3,7 @@
 import type React from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Gamepad2, Crosshair, WalletCardsIcon as Cards, Trophy } from "lucide-react"
+import { Gamepad2, Crosshair, WalletCardsIcon as Cards, BombIcon as BilliardBall } from "lucide-react"
 import Image from "next/image"
 import SoundButton from "../sound-button"
 
@@ -25,23 +25,23 @@ interface Game {
 }
 
 export default function GameSelection({ publicKey, balance, mutbBalance, onSelectGame }: GameSelectionProps) {
-  // Available games - with Turn-Based Strategy as "coming soon"
+  // Available games
   const games: Game[] = [
     {
       id: "top-down-shooter",
-      name: "Top-Down Shooter",
+      name: "MUTBow PvP",
       description: "Fast-paced arena shooter with physics-based projectiles and dodge mechanics",
-      image: "/pixel-art-top-down-shooter.png",
+      image: "/images/archer-game.png",
       icon: <Crosshair className="h-5 w-5" />,
       status: "live",
       minWager: 1,
     },
     {
-      id: "turn-based-strategy",
-      name: "Turn-Based Strategy",
-      description: "Strategic combat with unique units, abilities, and tactical positioning",
-      image: "/pixel-art-strategy.png",
-      icon: <Trophy className="h-5 w-5" />,
+      id: "mutball-pool",
+      name: "MUTBall Pool",
+      description: "Strategic pool game with power-ups and special abilities to sink balls",
+      image: "/pixel-art-pool.png",
+      icon: <BilliardBall className="h-5 w-5" />,
       status: "coming-soon",
       minWager: 3,
     },
